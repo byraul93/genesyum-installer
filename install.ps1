@@ -146,6 +146,36 @@ try {
     exit 1
 }
 
+# Helper generic: instaleaza un pachet via winget cu detectie post-install si refresh PATH.
+# Returneaza $true daca cmd e disponibil dupa instalare.
+function Install-WingetPackage {
+    param(
+        [Parameter(Mandatory)] [string]$WingetId,
+        [Parameter(Mandatory)] [string]$VerifyCommand,  # ex: 'git', 'node', 'bun'
+        [string[]]$ExtraPaths = @()                     # ex: 'C:\Program Files\Git\cmd' pentru detectie manuala
+    )
+    if (-not (Test-Command 'winget')) {
+        Write-Warn "winget NU detectat (Windows prea vechi sau App Installer lipsa)"
+        return $false
+    }
+    Write-Step "Instalare $WingetId via winget (poate dura 1-3 minute)..."
+    $r = Invoke-Native -FilePath 'winget' -Arguments @('install', '--id', $WingetId, '-e', '--silent', '--accept-source-agreements', '--accept-package-agreements')
+    # winget poate returna non-zero la "deja instalat" (0x8A150011) sau update partial - verificam
+    # disponibilitatea EFECTIVA a comenzii, nu doar exit code-ul.
+    Update-EnvPath
+    foreach ($p in $ExtraPaths) {
+        if ((Test-Path $p) -and ($env:Path -notlike "*$p*")) {
+            $env:Path = "$p;$env:Path"
+        }
+    }
+    if (Test-Command $VerifyCommand) {
+        return $true
+    }
+    Write-Warn "${WingetId}: post-install '$VerifyCommand' nu raspunde (exit $($r.ExitCode))"
+    if ($r.Output) { Write-Info ($r.Output -split "`n" | Select-Object -First 5) }
+    return $false
+}
+
 # === Git ===
 
 Write-Header "3. GIT"
@@ -154,36 +184,16 @@ if (Test-Command 'git') {
     $gitVer = (git --version 2>&1).Trim()
     Write-OK "$gitVer (deja instalat)"
 } else {
-    Write-Step "Git NU detectat - instalare via winget..."
-    if (Test-Command 'winget') {
-        $r = Invoke-Native -FilePath 'winget' -Arguments @('install', '--id', 'Git.Git', '-e', '--silent', '--accept-source-agreements', '--accept-package-agreements')
-        if ($r.ExitCode -eq 0) {
-            Update-EnvPath
-            # Adauga manual default Git path daca winget nu a refresh-uit imediat
-            $gitDefault = 'C:\Program Files\Git\cmd'
-            if ((Test-Path "$gitDefault\git.exe") -and ($env:Path -notlike "*$gitDefault*")) {
-                $env:Path = "$gitDefault;$env:Path"
-            }
-            if (Test-Command 'git') {
-                $gitVer = (git --version 2>&1).Trim()
-                Write-OK "$gitVer instalat"
-            } else {
-                Write-Err "Git instalat dar NU detectat in PATH"
-                Write-Info "INCHIDE PowerShell, REDESCHIDE ca Admin si re-ruleaza Genesyum-Install.exe."
-                exit 2
-            }
-        } else {
-            Write-Err "winget install Git.Git esuat (exit $($r.ExitCode))"
-            Write-Info ($r.Output)
-            Write-Info "Instaleaza manual de la https://git-scm.com/download/win apoi re-ruleaza installer-ul."
-            Start-Process 'https://git-scm.com/download/win'
-            exit 1
-        }
+    Write-Step "Git NU detectat"
+    $ok = Install-WingetPackage -WingetId 'Git.Git' -VerifyCommand 'git' -ExtraPaths @('C:\Program Files\Git\cmd')
+    if ($ok) {
+        $gitVer = (git --version 2>&1).Trim()
+        Write-OK "$gitVer instalat"
     } else {
-        Write-Warn "winget NU detectat - download manual Git for Windows..."
-        Write-Info "Pe pagina deschisa, click 'Click here to download' si instaleaza (accepta default-uri)."
+        Write-Err "Git nu a putut fi instalat automat"
+        Write-Info "Instaleaza manual de la https://git-scm.com/download/win, apoi:"
+        Write-Info "  INCHIDE PowerShell, REDESCHIDE ca Admin, re-ruleaza Genesyum-Install.exe"
         Start-Process 'https://git-scm.com/download/win'
-        Wait-User "Dupa install Git, INCHIDE PowerShell, REDESCHIDE ca Admin si re-ruleaza installer-ul."
         exit 2
     }
 }
@@ -199,16 +209,27 @@ if (Test-Command 'node') {
         Write-OK "Node.js $nodeVer (deja instalat)"
     } else {
         Write-Warn "Node.js $nodeVer prea vechi. Cere min v18."
-        Start-Process 'https://nodejs.org'
-        Wait-User "Instaleaza Node.js LTS, apoi inchide PowerShell, redeschide ca Admin si ruleaza din nou installer-ul."
-        exit 2
+        $ok = Install-WingetPackage -WingetId 'OpenJS.NodeJS.LTS' -VerifyCommand 'node' -ExtraPaths @("$env:ProgramFiles\nodejs")
+        if (-not $ok) {
+            Start-Process 'https://nodejs.org'
+            Wait-User "Instaleaza Node.js LTS manual, apoi INCHIDE si REDESCHIDE PowerShell ca Admin."
+            exit 2
+        }
+        $nodeVer = (node --version 2>&1).Trim().TrimStart('v')
+        Write-OK "Node.js $nodeVer instalat"
     }
 } else {
     Write-Step "Node.js NU detectat"
-    Start-Process 'https://nodejs.org'
-    Write-Info "Pe pagina deschisa, click LTS si instaleaza (accepta default-uri)."
-    Wait-User "Dupa install Node.js, INCHIDE PowerShell, REDESCHIDE ca Admin si ruleaza din nou installer-ul."
-    exit 2
+    $ok = Install-WingetPackage -WingetId 'OpenJS.NodeJS.LTS' -VerifyCommand 'node' -ExtraPaths @("$env:ProgramFiles\nodejs")
+    if ($ok) {
+        $nodeVer = (node --version 2>&1).Trim().TrimStart('v')
+        Write-OK "Node.js $nodeVer instalat"
+    } else {
+        Write-Err "Node.js nu a putut fi instalat automat"
+        Write-Info "Instaleaza manual LTS de la https://nodejs.org, apoi INCHIDE si REDESCHIDE PowerShell ca Admin."
+        Start-Process 'https://nodejs.org'
+        exit 2
+    }
 }
 
 # === Bun ===
@@ -219,36 +240,16 @@ if (Test-Command 'bun') {
     $bunVer = (bun --version 2>&1).Trim()
     Write-OK "Bun $bunVer (deja instalat)"
 } else {
-    Write-Step "Instalare Bun (poate dura 30-60 sec)..."
-    try {
-        # Bun installer printeaza output intern; redirect la null
-        $bunInstallScript = Invoke-RestMethod 'https://bun.sh/install.ps1'
-        # Run intr-un scriptblock izolat ca sa nu ne afecteze sesiunea curenta
-        $null = & ([scriptblock]::Create($bunInstallScript)) 2>&1
-
-        # Refresh PATH din ambele scope (User + Machine + adauga manual Bun bin)
-        $bunPath = "$env:USERPROFILE\.bun\bin"
-        $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
-        $userPath    = [Environment]::GetEnvironmentVariable('Path', 'User')
-        $env:Path = "$bunPath;$userPath;$machinePath"
-
-        # Re-test bun command (forteaza re-cache)
-        Get-Command bun -ErrorAction SilentlyContinue | Out-Null
-
-        if (Test-Path "$bunPath\bun.exe") {
-            $bunVer = (& "$bunPath\bun.exe" --version 2>&1).Trim()
-            Write-OK "Bun $bunVer instalat"
-        } else {
-            Write-Err "Bun NU a fost instalat (binary lipsa la $bunPath\bun.exe)"
-            Write-Info "Workaround manual: ruleaza in alt PowerShell:"
-            Write-Info "  irm bun.sh/install.ps1 | iex"
-            Write-Info "Apoi INCHIDE TOATE ferestrele PowerShell, redeschide ca Admin si re-ruleaza installer-ul Genesyum."
-            throw "Bun install incomplet"
-        }
-    } catch {
-        Write-Err "Eroare la install Bun: $_"
-        Write-Info "Pentru workaround manual, vezi mesajul de mai sus."
-        throw
+    Write-Step "Bun NU detectat"
+    $bunBin = Join-Path $env:USERPROFILE '.bun\bin'
+    $ok = Install-WingetPackage -WingetId 'Oven-sh.Bun' -VerifyCommand 'bun' -ExtraPaths @($bunBin)
+    if ($ok) {
+        $bunVer = (bun --version 2>&1).Trim()
+        Write-OK "Bun $bunVer instalat"
+    } else {
+        Write-Warn "Bun nu a putut fi instalat via winget - continui fara Bun"
+        Write-Info "Pentru bot Telegram, ruleaza manual: irm bun.sh/install.ps1 | iex"
+        Write-Info "Apoi re-ruleaza Genesyum-Install.exe."
     }
 }
 
@@ -497,7 +498,7 @@ $settingsContent = @"
 }
 "@
 
-$settingsContent | Out-File -FilePath $settingsPath -Encoding utf8
+[System.IO.File]::WriteAllText($settingsPath, $settingsContent, [System.Text.UTF8Encoding]::new($false))
 
 try {
     $null = Get-Content $settingsPath -Raw | ConvertFrom-Json
@@ -521,7 +522,7 @@ if (-not (Test-Path $genesyumDir)) {
 }
 $statePath = Join-Path $genesyumDir 'state.json'
 if (-not (Test-Path $statePath)) {
-    '{"schema_version":"2.0.0","student_id":null}' | Out-File -FilePath $statePath -Encoding utf8
+    [System.IO.File]::WriteAllText($statePath, '{"schema_version":"2.0.0","student_id":null}', [System.Text.UTF8Encoding]::new($false))
     Write-OK "state.json initial creat"
 } else {
     Write-OK "state.json existent - pastrat"
