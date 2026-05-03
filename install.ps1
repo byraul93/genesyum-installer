@@ -39,6 +39,28 @@ function Test-Command($cmd) {
     return $?
 }
 
+# Helper: ruleaza comanda native (npm, claude, git, etc.) si captureaza output FARA ca
+# stderr (warnings, npm notice, progress) sa fie tratat ca eroare in PS 5.1.
+function Invoke-Native {
+    param([string]$FilePath, [string[]]$Arguments)
+    $prev = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $output = & $FilePath @Arguments 2>&1 | ForEach-Object { "$_" }
+        $code   = $LASTEXITCODE
+        return @{ ExitCode = $code; Output = ($output -join "`n") }
+    } finally {
+        $ErrorActionPreference = $prev
+    }
+}
+
+# Helper: refresh PATH din scope-uri persistente (User + Machine) dupa instalari care adauga PATH
+function Update-EnvPath {
+    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+    $machPath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+    $env:Path = "$userPath;$machPath"
+}
+
 # === Welcome ===
 
 Clear-Host
@@ -196,18 +218,19 @@ if (Test-Command 'claude') {
     Write-OK "Claude Code (deja instalat)"
 } else {
     Write-Step "Instalare Claude Code CLI (poate dura 1-2 minute)..."
-    try {
-        $npmOut = npm install -g '@anthropic-ai/claude-code' 2>&1
-        if (Test-Command 'claude') {
-            Write-OK "Claude Code CLI instalat"
-        } else {
-            Write-Err "Claude Code instalat dar NU detectat"
-            Write-Info $npmOut
-            exit 1
-        }
-    } catch {
-        Write-Err "Eroare npm install: $_"
+    $r = Invoke-Native -FilePath 'npm' -Arguments @('install', '-g', '@anthropic-ai/claude-code')
+    if ($r.ExitCode -ne 0) {
+        Write-Err "npm install esuat (exit $($r.ExitCode))"
+        Write-Info ($r.Output)
         exit 1
+    }
+    Update-EnvPath
+    if (Test-Command 'claude') {
+        Write-OK "Claude Code CLI instalat"
+    } else {
+        Write-Err "Claude Code instalat dar NU detectat in PATH"
+        Write-Info "Inchide PowerShell, redeschide ca Admin si re-ruleaza installer-ul."
+        exit 2
     }
 }
 
@@ -218,12 +241,14 @@ Write-Header "6. SHOPIFY CLI"
 if (Test-Command 'shopify') {
     Write-OK "Shopify CLI (deja instalat)"
 } else {
-    Write-Step "Instalare Shopify CLI..."
-    try {
-        npm install -g '@shopify/cli@latest' 2>&1 | Out-Null
+    Write-Step "Instalare Shopify CLI (poate dura 2-3 minute)..."
+    $r = Invoke-Native -FilePath 'npm' -Arguments @('install', '-g', '@shopify/cli@latest')
+    if ($r.ExitCode -eq 0) {
+        Update-EnvPath
         Write-OK "Shopify CLI instalat"
-    } catch {
-        Write-Warn "Shopify CLI install esuat - continui (poti reinstala manual: npm install -g @shopify/cli@latest)"
+    } else {
+        Write-Warn "Shopify CLI install esuat (exit $($r.ExitCode)) - continui"
+        Write-Info "Reinstalare manuala: npm install -g @shopify/cli@latest"
     }
 }
 
@@ -251,10 +276,10 @@ $vsCodeInstalled = Test-Command 'code'
 if ($vsCodeInstalled) {
     Write-OK "VS Code detectat"
     Write-Step "Instalare extensie Claude Code in VS Code..."
-    try {
-        code --install-extension 'anthropic.claude-code' --force 2>&1 | Out-Null
+    $r = Invoke-Native -FilePath 'code' -Arguments @('--install-extension', 'anthropic.claude-code', '--force')
+    if ($r.ExitCode -eq 0) {
         Write-OK "Extensie instalata"
-    } catch {
+    } else {
         Write-Warn "Extensie NU instalata automat - manual din VS Code Extensions"
     }
 } else {
@@ -276,28 +301,26 @@ Write-Header "9. PLUGINS CLAUDE CODE"
 Write-Step "Cache credentials git pentru repo privat..."
 # Claude Code marketplace add face git clone in spate; pentru repo privat avem nevoie ca git
 # sa stie token-ul. Cache-uim PAT-ul in git credential store (Windows Credential Manager).
+$prev = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
 try {
     $credInput = "protocol=https`nhost=github.com`nusername=x-access-token`npassword=$pat`n"
-    $credInput | & git credential-manager store 2>&1 | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        # Fallback: incearca git credential approve (cross-helper)
-        $credInput | & git credential approve 2>&1 | Out-Null
-    }
+    $credInput | & git credential approve 2>&1 | Out-Null
     Write-OK "Credentials cache-uite"
 } catch {
-    Write-Warn "Nu am putut cache-ui credentials automat: $_"
-    Write-Info "Vei fi intrebat de credentials la urmatorul pas - username 'x-access-token', password = token-ul Genesyum."
+    Write-Warn "Nu am putut cache-ui credentials automat (vei fi intrebat de credentials)"
+} finally {
+    $ErrorActionPreference = $prev
 }
 
 Write-Step "Adaugare marketplace Genesyum..."
-try {
-    & claude plugin marketplace add $GENESYUM_PLUGINS_REPO 2>&1 | Tee-Object -Variable mpOut | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw ($mpOut -join "`n") }
+$r = Invoke-Native -FilePath 'claude' -Arguments @('plugin', 'marketplace', 'add', $GENESYUM_PLUGINS_REPO)
+if ($r.ExitCode -eq 0) {
     Write-OK "Marketplace genesyum-dev adaugat"
-} catch {
-    Write-Err "Eroare la add marketplace: $_"
+} else {
+    Write-Err "Eroare la add marketplace (exit $($r.ExitCode))"
+    Write-Info ($r.Output)
     Write-Info "Verifica ca token-ul Genesyum are access la $GENESYUM_PLUGINS_REPO."
-    Write-Info "Workaround manual: 'claude plugin marketplace add $GENESYUM_PLUGINS_REPO' apoi paste token cand intreaba."
     exit 1
 }
 
@@ -314,11 +337,12 @@ $plugins = @(
 
 foreach ($p in $plugins) {
     Write-Step "Install $($p.name) - $($p.desc)"
-    try {
-        claude plugin install $p.name --scope user 2>&1 | Out-Null
+    $r = Invoke-Native -FilePath 'claude' -Arguments @('plugin', 'install', $p.name, '--scope', 'user')
+    if ($r.ExitCode -eq 0) {
         Write-OK "$($p.name)"
-    } catch {
-        Write-Warn "$($p.name) NU instalat: $_"
+    } else {
+        Write-Warn "$($p.name) NU instalat (exit $($r.ExitCode))"
+        if ($r.Output) { Write-Info ($r.Output | Select-Object -First 3) }
     }
 }
 
