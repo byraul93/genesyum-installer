@@ -223,10 +223,15 @@ Tell them:
 >
 > 1. Deschide pe telefon: https://t.me/BotFather
 > 2. Trimite: `/newbot`
-> 3. Nume (orice, ex: 'GenyAR mentor'): trimite numele
-> 4. Username (terminat în 'bot', ex: 'genyar_xxx_bot'): trimite username-ul
+> 3. **Nume bot (display name):** trimite exact `GenyAR` — toți studenții Genesyum au același nume pentru consistență brand.
+> 4. **Username (handle unic, terminat în 'bot'):** trimite ceva personalizat ție, ex: `genyar_paul_bot`, `genyar_maria_bot`. Dacă username-ul e luat, încearcă cu o cifră: `genyar_paul_2026_bot`. Username-ul îl folosești doar la prima conectare; după aceea vorbești direct cu bot-ul "GenyAR" în lista de chat-uri Telegram.
 > 5. BotFather îți răspunde cu un TOKEN (format: `123456789:AAH...`)
 > 6. Copiază token-ul și paste-l aici."
+
+**Important:** if the student tries a different display name (not `GenyAR`), correct them politely:
+> "Pentru consistență cu programul Genesyum, te rog folosește exact numele `GenyAR` la pasul 3. Username-ul (pasul 4) poate fi orice — acolo personalizezi."
+
+Wait until they confirm they used `GenyAR` as the display name before proceeding.
 
 Wait for the token. Validate format: `^\d{8,}:[A-Za-z0-9_-]{30,}$`. If invalid, ask again.
 
@@ -344,6 +349,7 @@ While doing this setup:
 - **Do not assume** packages are installed. Always verify with `--version` checks.
 - **Do not ask for or accept GitHub PATs** in chat. The auth model is GitHub Collaborator (Step 1) — student must have been invited to the repo and accepted. There is no token to paste.
 - **Do not write the Telegram bot token** anywhere except the `.env` file path specified.
+- **The Telegram bot display name MUST be `GenyAR`** (Step 8a). If the student picks a different name, ask them to redo with `GenyAR`. The username (handle) is personal and free-form.
 
 ---
 
