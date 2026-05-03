@@ -1,13 +1,13 @@
 # Genesyum AI — Setup Instructions for Claude
 
 **Audience:** Claude (running in student's Claude Desktop or VS Code session).
-**Purpose:** This file tells you, Claude, how to set up the Genesyum mentor system on the student's machine. Read carefully and execute step by step. The student gave you this URL because they want you to do the setup for them.
+**Purpose:** This file tells you, Claude, how to set up the Genesyum mentor system on the student's machine. Read carefully and execute step by step.
 
 ---
 
 ## What you are installing
 
-**Genesyum AI Mentor** — a 3-plugin Claude Code system that guides students through dropshipping (Shopify + Google Shopping) for Big 5 markets (UK, US, CA, AU, NZ).
+**Genesyum AI Mentor** — a 3-plugin Claude Code system for dropshipping (Shopify + Google Shopping) on Big 5 markets (UK, US, CA, AU, NZ).
 
 You will install:
 - `genesyum-core@genesyum-dev` — onboarding, status, help
@@ -18,8 +18,6 @@ You will install:
 ---
 
 ## Prerequisites — verify first
-
-Run these checks. If any fail, ask the student to install the missing tool, then continue.
 
 ```bash
 git --version       # any version
@@ -32,40 +30,35 @@ If `node` is missing → ask student to install Node.js LTS from https://nodejs.
 
 ---
 
-## Step 1 — Get the Genesyum access token (PAT)
+## Step 1 — Verify GitHub access
 
-The student should have provided a token in their message (format: `github_pat_11C...`).
+The Genesyum plugins repo is **private**. The student must have already been **invited as a collaborator** by Raul (admin) and **accepted** the invitation via the email/notification GitHub sent them.
 
-If they did NOT provide it, ask:
-> "Pentru a continua am nevoie de token-ul Genesyum primit pe email/Telegram (format: `github_pat_...`). Trimite-l aici."
-
-Validate the token format with this regex: `^github_pat_[A-Za-z0-9_]{40,}$`. If invalid, ask again.
-
-**Verify the token works** (read-only check — does NOT modify anything):
+Check that git is authenticated with the student's GitHub account:
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer <PAT>" https://api.github.com/repos/byraul93/genesyum-plugins
+git config --global user.email
+git config --global user.name
 ```
 
-Expect `200`. If `401` or `404` → tell student the token is invalid/expired and to contact `support@genesyum.com`.
+If both are empty, ask the student:
+> "Trebuie să fii logat cu contul GitHub care a primit invitația la repo-ul Genesyum. Ai instalată aplicația **GitHub Desktop** sau ai folosit **VS Code → Sign in with GitHub**? Dacă nu, ruleaza în terminal: `gh auth login` (necesită GitHub CLI). Sau loghează-te din GitHub Desktop și redeschide Claude."
+
+Test access to the private repo:
+
+```bash
+git ls-remote https://github.com/byraul93/genesyum-plugins HEAD
+```
+
+- ✅ If output is a SHA hash → access OK, continue.
+- ❌ If error `Authentication failed` or `Repository not found`:
+  - Tell student: *"Nu am access la repo-ul Genesyum cu contul tău GitHub. Asigură-te că ai acceptat invitația primită pe email de la Raul/Genesyum. Verifică la https://github.com/byraul93/genesyum-plugins/invitations. Dacă nu ai primit invitație, contactează `support@genesyum.com` cu username-ul GitHub."*
+  - **STOP** — do not continue setup.
 
 ---
 
-## Step 2 — Cache PAT in git credential store
+## Step 2 — Install Bun runtime (for Telegram bot bridge)
 
-Required because `claude plugin marketplace add` does a `git clone` of the private repo behind the scenes.
-
-```bash
-printf "protocol=https\nhost=github.com\nusername=x-access-token\npassword=<PAT>\n\n" | git credential approve
-```
-
-Replace `<PAT>` with the actual token. No output = success.
-
----
-
-## Step 3 — Install Bun runtime (for Telegram bot bridge)
-
-Check if Bun is already installed:
 ```bash
 bun --version
 ```
@@ -75,35 +68,33 @@ If missing, install via winget (Windows):
 winget install --id Oven-sh.Bun -e --silent --accept-source-agreements --accept-package-agreements
 ```
 
-If winget is not available, fall back to:
+Mac/Linux:
 ```bash
-powershell -c "irm bun.sh/install.ps1 | iex"
+curl -fsSL https://bun.sh/install | bash
 ```
 
-After install, verify `bun --version` works. If still failing, tell student to restart their terminal and re-run setup.
+After install, verify `bun --version`. If still failing, tell student to restart their terminal and re-run setup.
 
 ---
 
-## Step 4 — Add the Genesyum marketplace
+## Step 3 — Add the Genesyum marketplace
 
 ```bash
 claude plugin marketplace add byraul93/genesyum-plugins
 ```
 
-Should succeed silently. If it errors with auth/clone issues, repeat Step 2 (credential cache) and retry. Do NOT add the marketplace with `--token` — that flag does not exist.
+If git was authenticated correctly (Step 1), this works without any extra auth. If it fails with `Failed to clone marketplace repository`, the student's git auth is broken — re-run Step 1 verification and ask them to fix GitHub login.
 
 Verify:
 ```bash
 claude plugin marketplace list
 ```
 
-Should list `genesyum-dev`.
+Should show `genesyum-dev`.
 
 ---
 
-## Step 5 — Install the 3 Genesyum plugins
-
-Run each, one by one. Wait for each to finish before the next.
+## Step 4 — Install the 3 Genesyum plugins
 
 ```bash
 claude plugin install genesyum-core@genesyum-dev --scope user
@@ -115,9 +106,10 @@ If any fails, capture the error output and report it to the student before conti
 
 ---
 
-## Step 6 — Install the 5 dependency plugins (public, no auth)
+## Step 5 — Install the 5 dependency plugins (public, no auth)
 
 ```bash
+claude plugin marketplace add anthropics/claude-plugins-official
 claude plugin install telegram@claude-plugins-official --scope user
 claude plugin install shopify-ai-toolkit@claude-plugins-official --scope user
 claude plugin install playwright@claude-plugins-official --scope user
@@ -125,28 +117,18 @@ claude plugin install frontend-design@claude-plugins-official --scope user
 claude plugin install context7@claude-plugins-official --scope user
 ```
 
-If `claude-plugins-official` marketplace is not configured, add it first:
-```bash
-claude plugin marketplace add anthropics/claude-plugins-official
-```
+(If `claude-plugins-official` marketplace is already configured, the first command will say so — that's fine, continue.)
 
 ---
 
-## Step 7 — Configure `~/.claude/settings.json`
+## Step 6 — Configure `~/.claude/settings.json`
 
 **Important:** if the file already exists, BACK IT UP first (do not destroy student's existing config):
 
-```bash
-# Windows
-copy "%USERPROFILE%\.claude\settings.json" "%USERPROFILE%\.claude\settings.json.bak.<timestamp>"
-
-# Or via Claude tools — read existing, save backup, then merge
-```
-
-**Merge strategy** (do NOT overwrite blindly):
 1. Read existing `~/.claude/settings.json` (if any).
-2. Add/merge the keys below into the existing JSON. Preserve any existing custom keys (hooks, mcpServers, etc.) the student already had.
-3. Write back as UTF-8 without BOM.
+2. Save backup at `~/.claude/settings.json.bak.<timestamp>`.
+3. Merge the keys below into the existing JSON. Preserve any custom keys (hooks, mcpServers, etc.) the student already had.
+4. Write back as UTF-8 without BOM.
 
 Required keys to ensure are present:
 
@@ -217,7 +199,7 @@ After writing, validate the file is valid JSON before continuing.
 
 ---
 
-## Step 8 — Initialize Genesyum state
+## Step 7 — Initialize Genesyum state
 
 Create `~/.genesyum/state.json` if it does not already exist (do NOT overwrite existing):
 
@@ -227,7 +209,7 @@ Create `~/.genesyum/state.json` if it does not already exist (do NOT overwrite e
 
 ---
 
-## Step 9 — Telegram bot (optional, ask student)
+## Step 8 — Telegram bot (optional, ask student)
 
 Ask:
 > "Vrei să folosești Telegram pentru a vorbi cu mine de pe telefon? (Y/n)"
@@ -241,23 +223,21 @@ If yes:
    - Copy the token (format: `123456789:AAH...`)
 2. Ask them to paste the bot token here.
 3. Validate format: `^\d{8,}:[A-Za-z0-9_-]{30,}$`. If invalid, ask again.
-4. Save it (UTF-8 no BOM, no trailing newline):
-   - Path: `%USERPROFILE%\.claude\channels\telegram\.env`
+4. Save it (UTF-8 no BOM, no trailing newline) at:
+   - Path: `%USERPROFILE%\.claude\channels\telegram\.env` (Windows) or `~/.claude/channels/telegram/.env` (Mac/Linux)
    - Content: `TELEGRAM_BOT_TOKEN=<token>`
 
 Tell them they will pair their phone after restart by running `/telegram:access pair <code>` once the bot DMs them a 6-character code on first message.
 
 ---
 
-## Step 10 — Final verification
-
-Run this to confirm everything is in place:
+## Step 9 — Final verification
 
 ```bash
 claude plugin list
 ```
 
-Should show all 8 plugins enabled. If any are missing, retry Step 5/6 for that one.
+Should show all 8 plugins enabled. If any are missing, retry Step 4/5 for that one.
 
 Read `~/.claude/settings.json` and verify:
 - `enabledPlugins` has all 8 entries set to `true`
@@ -266,7 +246,7 @@ Read `~/.claude/settings.json` and verify:
 
 ---
 
-## Step 11 — Report to student
+## Step 10 — Report to student
 
 When everything passes, send the student this exact message in Romanian:
 
@@ -291,7 +271,7 @@ While doing this setup:
 - **Do not skip steps** to be "efficient." Every step matters.
 - **Do not silently swallow errors.** If a command fails, report the error to the student verbatim and stop.
 - **Do not assume** packages are installed. Always verify with `--version` checks.
-- **Do not write the PAT** anywhere except `git credential approve`. Do NOT save it to a file.
+- **Do not ask for or accept GitHub PATs** in chat. The auth model is GitHub Collaborator (Step 1) — student must have been invited to the repo and accepted. There is no token to paste.
 - **Do not write the Telegram bot token** anywhere except the `.env` file path specified.
 
 ---
@@ -300,14 +280,14 @@ While doing this setup:
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `Failed to clone marketplace repository` | git missing or PAT not cached | Re-run Step 2 (credential approve) and Step 3 (install Bun is independent) |
+| `Failed to clone marketplace repository: Authentication failed` | git not logged in with the GitHub account that has access | Run `gh auth login` or sign in via GitHub Desktop / VS Code; restart Claude |
+| `Repository not found` (yet student knows it exists) | Student wasn't invited or didn't accept invitation | Send student to https://github.com/byraul93/genesyum-plugins/invitations to accept; if no invitation, contact support |
 | `git not found or in unsafe location` | Git for Windows not installed | Install Git from https://git-scm.com/download/win |
-| `npm install` fails with `npm notice` text | Output redirected stderr in PowerShell — not a real error | Check `claude --version` actually works after; if yes, ignore the notice |
-| Plugin install: "marketplace not found" | Marketplace add failed silently | Re-run Step 4 |
+| Plugin install: "marketplace not found" | Marketplace add failed silently | Re-run Step 3 |
 | Settings.json is invalid after edit | BOM or syntax error | Re-read backup `*.bak.*` and merge again carefully |
 
 ---
 
 **Maintainer:** Raul Paclisan / Genesyum
 **Last updated:** 2026-05-03
-**Version:** 1.0.0
+**Version:** 1.1.0 (auth via GitHub Collaborator, no PAT)
