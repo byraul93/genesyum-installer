@@ -1,7 +1,7 @@
-# Genesyum Installer — bootstrap thin
+# Genesyum Installer - bootstrap thin
 # Compilat la Genesyum-Install.exe via ps2exe.
 # Descarca install.ps1 din GitHub si il ruleaza.
-# Update-uri viitoare la install.ps1 ajung automat la studenti — exe-ul ramane stabil.
+# Update-uri viitoare la install.ps1 ajung automat la studenti - exe-ul ramane stabil.
 
 $ErrorActionPreference = 'Stop'
 
@@ -17,8 +17,8 @@ function Write-Banner {
     Write-Host ''
     Write-Host '  +========================================================+' -ForegroundColor Cyan
     Write-Host '  |                                                        |' -ForegroundColor Cyan
-    Write-Host '  |          GENESYUM AI INSTALLER v1.0                    |' -ForegroundColor Cyan
-    Write-Host '  |          Dropshipping mentor — Big 5 markets           |' -ForegroundColor Cyan
+    Write-Host '  |          GENESYUM AI INSTALLER v1.0.0                  |' -ForegroundColor Cyan
+    Write-Host '  |          Dropshipping mentor - Big 5 markets           |' -ForegroundColor Cyan
     Write-Host '  |                                                        |' -ForegroundColor Cyan
     Write-Host '  +========================================================+' -ForegroundColor Cyan
     Write-Host ''
@@ -26,7 +26,7 @@ function Write-Banner {
 
 Write-Banner
 
-# Sursa install.ps1 — schimbabila daca pivot URL
+# Sursa install.ps1 - schimbabila daca pivot URL
 $InstallerUrl = 'https://raw.githubusercontent.com/byraul93/genesyum-installer/main/install.ps1'
 $LocalPath    = Join-Path $env:TEMP 'genesyum-install.ps1'
 
@@ -72,14 +72,23 @@ try {
 }
 
 Write-Host ''
-if ($exitCode -eq 0) {
-    Write-Host '  +-------------------------------------------+' -ForegroundColor Green
-    Write-Host '  | Instalare COMPLETA. Verifica desktop.     |' -ForegroundColor Green
-    Write-Host '  +-------------------------------------------+' -ForegroundColor Green
-} else {
-    Write-Host '  +-------------------------------------------+' -ForegroundColor Red
-    Write-Host '  | Instalare INCOMPLETA. Vezi mesajele sus.  |' -ForegroundColor Red
-    Write-Host '  +-------------------------------------------+' -ForegroundColor Red
+switch ($exitCode) {
+    0 {
+        Write-Host '  +-------------------------------------------+' -ForegroundColor Green
+        Write-Host '  | Instalare COMPLETA. Verifica desktop.     |' -ForegroundColor Green
+        Write-Host '  +-------------------------------------------+' -ForegroundColor Green
+    }
+    2 {
+        Write-Host '  +---------------------------------------------------+' -ForegroundColor Yellow
+        Write-Host '  | RESTART NECESAR - instaleaza dependinta lipsa,    |' -ForegroundColor Yellow
+        Write-Host '  | apoi RULEAZA DIN NOU Genesyum-Install.exe.        |' -ForegroundColor Yellow
+        Write-Host '  +---------------------------------------------------+' -ForegroundColor Yellow
+    }
+    default {
+        Write-Host '  +-------------------------------------------+' -ForegroundColor Red
+        Write-Host '  | Instalare INCOMPLETA. Vezi mesajele sus.  |' -ForegroundColor Red
+        Write-Host '  +-------------------------------------------+' -ForegroundColor Red
+    }
 }
 
 Write-Host ''

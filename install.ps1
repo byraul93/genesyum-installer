@@ -5,13 +5,13 @@
 #   iex (irm "https://raw.githubusercontent.com/byraul93/genesyum-installer/main/install.ps1")
 #
 # Cere PAT student (primit prin email/Telegram de la support).
-# Configurează: Node + Bun + Claude Code CLI + Shopify CLI + 8 plugins + Telegram bot opțional + 3 shortcut-uri Desktop.
+# Configureaza: Node + Bun + Claude Code CLI + Shopify CLI + 8 plugins + Telegram bot optional + 3 shortcut-uri Desktop.
 
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
 # Config
-$GENESYUM_PLUGINS_REPO = 'byraul93/genesyum-plugins'  # PRIVAT — cere PAT
+$GENESYUM_PLUGINS_REPO = 'byraul93/genesyum-plugins'  # PRIVAT - cere PAT
 $INSTALLER_VERSION     = '1.0.0'
 
 # === UI Helpers ===
@@ -61,7 +61,7 @@ Write-Host "  Vei avea nevoie de:"
 Write-Host "    1. Token de access Genesyum (primit prin email/Telegram)"
 Write-Host "    2. Optional: cont Telegram + bot (pentru access mobil)"
 Write-Host ""
-Write-Host "  Durata estimata: 10-15 minute" -ForegroundColor Gray
+Write-Host "  Durata estimata: 20-30 minute (depinde de viteza internet)" -ForegroundColor Gray
 Write-Host ""
 
 Wait-User "Apasa ENTER pentru a incepe (sau Ctrl+C pentru a anula)..."
@@ -83,10 +83,11 @@ if (-not [System.Environment]::Is64BitOperatingSystem) {
 Write-OK "Windows 64-bit"
 
 try {
-    $null = Test-Connection -ComputerName 'github.com' -Count 1 -Quiet -ErrorAction Stop
-    Write-OK "Internet activ"
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    $null = Invoke-WebRequest -Uri 'https://github.com' -Method Head -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
+    Write-OK "Internet activ (github.com accesibil)"
 } catch {
-    Write-Err "Fara internet. Verifica wifi si reincearca."
+    Write-Err "Fara internet sau github.com inaccesibil. Verifica wifi si reincearca."
     exit 1
 }
 
@@ -136,14 +137,14 @@ if (Test-Command 'node') {
         Write-Warn "Node.js $nodeVer prea vechi. Cere min v18."
         Start-Process 'https://nodejs.org'
         Wait-User "Instaleaza Node.js LTS, apoi inchide PowerShell, redeschide ca Admin si ruleaza din nou installer-ul."
-        exit 0
+        exit 2
     }
 } else {
     Write-Step "Node.js NU detectat"
     Start-Process 'https://nodejs.org'
     Write-Info "Pe pagina deschisa, click LTS si instaleaza (accepta default-uri)."
     Wait-User "Dupa install Node.js, INCHIDE PowerShell, REDESCHIDE ca Admin si ruleaza din nou installer-ul."
-    exit 0
+    exit 2
 }
 
 # === Bun ===
@@ -244,7 +245,7 @@ if (Test-Path $settingsPath) {
 
 # === VS Code ===
 
-Write-Header "8. VS CODE (canal chat opțional)"
+Write-Header "8. VS CODE (canal chat optional)"
 
 $vsCodeInstalled = Test-Command 'code'
 if ($vsCodeInstalled) {
@@ -272,12 +273,31 @@ if ($vsCodeInstalled) {
 
 Write-Header "9. PLUGINS CLAUDE CODE"
 
+Write-Step "Cache credentials git pentru repo privat..."
+# Claude Code marketplace add face git clone in spate; pentru repo privat avem nevoie ca git
+# sa stie token-ul. Cache-uim PAT-ul in git credential store (Windows Credential Manager).
+try {
+    $credInput = "protocol=https`nhost=github.com`nusername=x-access-token`npassword=$pat`n"
+    $credInput | & git credential-manager store 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        # Fallback: incearca git credential approve (cross-helper)
+        $credInput | & git credential approve 2>&1 | Out-Null
+    }
+    Write-OK "Credentials cache-uite"
+} catch {
+    Write-Warn "Nu am putut cache-ui credentials automat: $_"
+    Write-Info "Vei fi intrebat de credentials la urmatorul pas - username 'x-access-token', password = token-ul Genesyum."
+}
+
 Write-Step "Adaugare marketplace Genesyum..."
 try {
-    claude plugin marketplace add $GENESYUM_PLUGINS_REPO --token $pat 2>&1 | Out-Null
+    & claude plugin marketplace add $GENESYUM_PLUGINS_REPO 2>&1 | Tee-Object -Variable mpOut | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw ($mpOut -join "`n") }
     Write-OK "Marketplace genesyum-dev adaugat"
 } catch {
     Write-Err "Eroare la add marketplace: $_"
+    Write-Info "Verifica ca token-ul Genesyum are access la $GENESYUM_PLUGINS_REPO."
+    Write-Info "Workaround manual: 'claude plugin marketplace add $GENESYUM_PLUGINS_REPO' apoi paste token cand intreaba."
     exit 1
 }
 
@@ -319,7 +339,10 @@ if (-not $skipTelegram) {
     Write-Host "  5. Username - terminat in 'bot' (ex: 'genyar_tau_bot')"
     Write-Host "  6. Vei primi un TOKEN (format: 123456789:AAH...)"
     Write-Host ""
-    Start-Process 'https://t.me/BotFather'
+    Write-Host "  Link direct (deschide in browser sau Telegram desktop):" -ForegroundColor Gray
+    Write-Host "    https://t.me/BotFather" -ForegroundColor Gray
+    Write-Host ""
+    try { Start-Process 'https://t.me/BotFather' -ErrorAction Stop } catch { Write-Info "(nu am putut deschide automat - copiaza link-ul de mai sus)" }
 
     $tgTokenSecure = Read-Host "  Lipeste TOKEN-ul Telegram aici" -AsSecureString
     $BSTR2 = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($tgTokenSecure)
@@ -373,8 +396,9 @@ $settingsContent = @"
       "mcp__plugin_playwright_playwright__browser_hover",
       "mcp__plugin_playwright_playwright__browser_fill_form",
       "mcp__plugin_playwright_playwright__browser_select_option",
-      "mcp__plugin_playwright_playwright__browser_scroll",
       "mcp__plugin_playwright_playwright__browser_tabs",
+      "mcp__plugin_playwright_playwright__browser_console_messages",
+      "mcp__plugin_playwright_playwright__browser_close",
       "mcp__plugin_context7_context7__query-docs",
       "mcp__plugin_context7_context7__resolve-library-id"
     ],
@@ -475,8 +499,12 @@ if (-not $skipTelegram) {
 @echo off
 cd /d "$workDir"
 title Genesyum - Telegram Bot ACTIV
-echo NU INCHIDE aceasta fereastra cat folosesti bot-ul!
-claude --channels plugin:telegram@claude-plugins-official
+echo ============================================
+echo  TELEGRAM BOT ACTIV
+echo  NU INCHIDE aceasta fereastra cat folosesti bot-ul!
+echo ============================================
+echo.
+claude
 pause
 "@ | Out-File $sc3 -Encoding ascii
     Write-OK "'Genesyum Telegram' Desktop"
