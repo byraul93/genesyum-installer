@@ -15,7 +15,10 @@ You have full tool access on the student's machine: `Bash`, `PowerShell`, `Write
 2. **Write every file yourself** with the `Write` or `Edit` tool. Do NOT ask the student to create files manually.
 3. **Use `TodoWrite`** at the start to plan all 10 steps. Update progress as you go.
 4. **The ONLY thing the student does manually is create the Telegram bot in BotFather (Step 8a)** — because BotFather is a Telegram bot on their phone and you cannot reach it. Everything else = your job.
-5. **Permission prompts:** if the harness asks the student to approve a tool call, just wait — they'll approve. Do not abandon the step.
+5. **Permission prompts:** the harness will ask the student to approve some tool calls. Tell the student up front (before running the first Bash/PowerShell command):
+   > "Vei vedea câteva pop-up-uri unde Claude Code îți cere permisiune să ruleze comenzi. La fiecare, click **'Allow for this conversation'** (NU 'Allow once') — așa nu mai apare la fiecare comandă și setup-ul curge fluent."
+   
+   If a permission is denied, stop and ask the student to retry the step.
 6. **When you cannot run something** (e.g., a permission was denied, a tool is missing), stop and tell the student exactly what blocked you with the error verbatim. Do NOT pivot to "please run this command."
 
 ### Communication style with the student
@@ -138,16 +141,49 @@ Update: "✅ Toate plugins instalate (3 Genesyum + 5 dependențe)."
 
 ## Step 6 — Configure `~/.claude/settings.json` (execute yourself)
 
-Use the `Read`, `Write`, and `Bash` tools to do this — do NOT instruct the student.
+Use the `Read`, `Write`, and `Bash`/`PowerShell` tools — do NOT instruct the student.
 
-1. Use `Read` on `~/.claude/settings.json`. If it exists:
-   - Use `Bash` to copy it: `cp ~/.claude/settings.json ~/.claude/settings.json.bak.$(date +%Y%m%d-%H%M%S)` (or PowerShell equivalent on Windows).
-   - Parse the existing JSON content.
-2. Compute the merged JSON object: existing JSON + the keys below. Preserve any existing custom keys (hooks, mcpServers, theme, etc.) the student had.
-3. Use `Write` to save the merged result to `~/.claude/settings.json` as UTF-8 without BOM.
-4. Validate by running `Bash`: `node -e "JSON.parse(require('fs').readFileSync('<path>', 'utf8'))"` — if it errors, restore from the backup and tell the student.
+The settings file path:
+- Windows: `$env:USERPROFILE\.claude\settings.json` (or in bash: `~/.claude/settings.json`)
+- Mac/Linux: `~/.claude/settings.json`
 
-Update: "✅ settings.json configurat (cu backup la cel existent)."
+### 6.1 — Check existence and back up
+
+First check if the file exists. Use `Bash` (`test -f ~/.claude/settings.json && echo EXISTS`) or `PowerShell` (`Test-Path "$env:USERPROFILE\.claude\settings.json"`).
+
+- **If it does not exist:** skip backup, treat existing config as `{}`.
+- **If it exists:** back it up with a timestamped filename. Pick the right shell:
+  - PowerShell: `Copy-Item "$env:USERPROFILE\.claude\settings.json" "$env:USERPROFILE\.claude\settings.json.bak.$(Get-Date -Format 'yyyyMMdd-HHmmss')"`
+  - Bash: `cp ~/.claude/settings.json ~/.claude/settings.json.bak.$(date +%Y%m%d-%H%M%S)`
+
+### 6.2 — Read existing config
+
+Use `Read` only after confirming the file exists. Parse to a JSON object (or start from `{}` if missing).
+
+### 6.3 — Deep-merge the required keys (do NOT overwrite)
+
+The student may have existing custom config (hooks, mcpServers, theme, custom permissions). **Merge**, do not replace. Strategy per key:
+
+- **`permissions.allow`** — UNION of student's existing entries + the entries from the template below. Deduplicate.
+- **`permissions.deny`** — UNION of student's existing entries + the deny list below. Deduplicate.
+- **`enabledPlugins`** — merge keys; if student already has `theme: false` for some plugin, preserve their choice. Add only missing Genesyum/dependency keys, all set to `true`.
+- **`extraKnownMarketplaces`** — merge keys; preserve existing marketplaces, add `genesyum-dev` and `claude-plugins-official` if missing.
+- **`autoUpdatesChannel`** — only set if the student does not already have a value.
+- **All other top-level keys** (hooks, mcpServers, theme, env, etc.) — preserve untouched.
+
+### 6.4 — Write merged config
+
+Use `Write` to save the merged JSON to the settings path. UTF-8 without BOM. Pretty-print with 2-space indent.
+
+### 6.5 — Validate
+
+Use `Bash`/`PowerShell` to run a JSON parse check:
+- PowerShell: `Get-Content "$env:USERPROFILE\.claude\settings.json" -Raw | ConvertFrom-Json | Out-Null; "OK"`
+- Bash: `node -e "JSON.parse(require('fs').readFileSync(process.env.HOME + '/.claude/settings.json','utf8'))" && echo OK`
+
+If invalid, restore from the most recent `.bak.*` backup and tell the student exactly what went wrong.
+
+Update: "✅ settings.json configurat (cu backup la cel existent dacă era cazul)."
 
 Required keys to ensure are present:
 
@@ -220,10 +256,15 @@ After writing, validate the file is valid JSON before continuing.
 
 ## Step 7 — Initialize Genesyum state (execute yourself)
 
-Use `Bash` and `Write`:
+Path:
+- Windows: `$env:USERPROFILE\.genesyum\state.json`
+- Mac/Linux: `~/.genesyum/state.json`
 
-1. Check if `~/.genesyum/state.json` exists. If yes, leave it alone.
-2. If no, `mkdir -p ~/.genesyum` then `Write` content `{"schema_version":"2.0.0","student_id":null}` to that path (UTF-8 no BOM).
+1. Check if the file exists (PowerShell `Test-Path` or Bash `test -f`).
+2. If yes, leave it alone — DO NOT overwrite student progress.
+3. If no:
+   - Create the directory: PowerShell `New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.genesyum"` or Bash `mkdir -p ~/.genesyum`
+   - Use `Write` to create the file with content `{"schema_version":"2.0.0","student_id":null}` (UTF-8 no BOM).
 
 Update (only if created): "✅ State Genesyum inițializat."
 
@@ -299,16 +340,15 @@ Update: "✅ Bot configurat să pornească automat la fiecare boot Windows. Icon
 ### 8d — Tell the student what happens next
 
 Send this message to them:
-> "Setup Telegram complet! Bot-ul e configurat să pornească automat la fiecare boot Windows — niciodată nu mai trebuie să deschizi terminal.
+> "Setup Telegram complet! Bot-ul e configurat să pornească automat la **fiecare boot Windows viitor**. (Pentru sesiunea de astăzi, va trebui să-l pornești manual o dată — vezi pasul 2 mai jos.)
 >
-> **Pairing-ul (o singură dată, după restart Claude):**
-> 1. La pasul 10 vei restarta Claude.
-> 2. După restart, deschide Telegram pe telefon și caută bot-ul **GenyAR** cu username-ul pe care l-ai ales (ex: `@genyar_xxx_bot`).
-> 3. Dă-i orice mesaj (ex: 'salut'). Bot-ul îți va trimite un cod de 6 caractere.
-> 4. Întoarce-te în Claude pe PC și scrie: `/telegram:access pair <COD>`
-> 5. Apoi: `/telegram:access policy allowlist`
+> **Pairing-ul (o singură dată):**
+> 1. **Restartează Claude** (vezi mesajul final de la pasul 10).
+> 2. **Pornește bot-ul manual prima dată:** dublu-click pe iconița **Genesyum Bot** de pe Desktop. Se deschide o fereastră minimizată în taskbar — asta e bot-ul care rulează. (De la următorul login Windows, pornește singur, nu mai trebuie click manual.)
+> 3. **Pe telefon:** deschide Telegram, caută bot-ul cu username-ul tău (ex: `@genyar_xxx_bot`), trimite-i orice mesaj. Bot-ul îți va trimite un cod de 6 caractere.
+> 4. **Pe PC, în Claude (sesiune nouă, după restart):** scrie `/telegram:access pair <COD>` (înlocuiește `<COD>` cu cele 6 caractere). Apoi: `/telegram:access policy allowlist`.
 >
-> **De atunci înainte:** PC pornește → bot pornit deja, scrii de pe telefon → primești răspuns. Zero terminal."
+> **De acum încolo:** PC pornește → bot pornit deja → scrii de pe telefon → primești răspuns. Zero terminal."
 
 ---
 
@@ -347,16 +387,33 @@ If anything failed, instead report the exact failures with line-by-line details 
 
 ---
 
+## Idempotency — handling re-runs
+
+A student may re-run this setup (machine reinstall, second laptop, partial previous run). Each step must be safe to repeat:
+
+- **Marketplace add** — if `claude plugin marketplace add` reports "already exists" or non-zero exit because of duplicate, treat as success and continue.
+- **Plugin install** — if `claude plugin install <name>` reports "already installed" or fails because plugin exists, treat as success and continue.
+- **settings.json** — backup + deep-merge (Step 6) — never overwrite existing custom keys.
+- **state.json** — only create if missing (Step 7).
+- **`.env` Telegram token** — overwrite is safe; the new token is the source of truth if student created a new bot.
+- **Launcher `.bat` and `.lnk` shortcuts** — overwrite is safe; existing files get refreshed.
+
+If a step fails for an unexpected reason (not "already exists" / "already installed"), stop and report the actual error.
+
+---
+
 ## Anti-hallucination rules for you, Claude
 
 While doing this setup:
-- **Do not invent flags** that don't exist (e.g., `claude plugin marketplace add --token` does NOT exist).
+- **Do not invent flags** that don't exist. Specifically: `claude plugin marketplace add --token` does NOT exist (only `--scope` and `--sparse`). `claude --channels plugin:...` does NOT exist (Telegram plugin auto-loads from `enabledPlugins`).
 - **Do not skip steps** to be "efficient." Every step matters.
 - **Do not silently swallow errors.** If a command fails, report the error to the student verbatim and stop.
 - **Do not assume** packages are installed. Always verify with `--version` checks.
 - **Do not ask for or accept GitHub PATs** in chat. The auth model is GitHub Collaborator (Step 1) — student must have been invited to the repo and accepted. There is no token to paste.
 - **Do not write the Telegram bot token** anywhere except the `.env` file path specified.
 - **The Telegram bot display name MUST be `GenyAR`** (Step 8a). If the student picks a different name, ask them to redo with `GenyAR`. The username (handle) is personal and free-form.
+- **Do not invent MCP tool names.** Specifically `browser_scroll` does NOT exist in the Playwright MCP tool list. Stick to the names in the settings.json template.
+- **PowerShell stderr is not always an error.** When running `npm install`, `claude plugin install`, `git`, etc. via PowerShell, native command stderr (e.g., "npm notice") gets wrapped as ErrorRecords if `$ErrorActionPreference='Stop'`. Use `$LASTEXITCODE` to determine real success/failure, not the presence of stderr text.
 
 ---
 
