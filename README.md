@@ -1,53 +1,66 @@
-# Genesyum AI Installer
+# Genesyum AI — Setup pentru studenți
 
-**One-click installer pentru studenții Genesyum** — configurează Claude Code + 8 plugins + bot Telegram opțional.
-
-## Install Genesyum (Windows) — 2 click-uri
-
-1. **Descarcă** [`Genesyum-Install.exe`](https://github.com/byraul93/genesyum-installer/raw/main/Genesyum-Install.exe) (51 KB)
-2. **Dublu-click** pe fișier → confirmă "Yes" la prompt-ul Windows (UAC) → installer pornește automat
-
-✅ **Niciun PowerShell, niciun copy-paste, nicio comandă.**
-
-Wizard-ul te ghidează prin:
-1. **Token Genesyum** — primit prin email/Telegram de la support
-2. **Setup Telegram (opțional)** — bot creat via @BotFather
-3. **VS Code (opțional)** — auto-install dacă lipsește
-
-După instalare:
-- **Genesyum Terminal** pe Desktop → CLI chat
-- **Genesyum VS Code** pe Desktop → IDE chat (dacă e instalat VS Code)
-- **Genesyum Telegram** pe Desktop → bot activ pentru DM telefon
+**Mentor AI dropshipping pentru piețele Big 5** (UK, US, CA, AU, NZ).
 
 ---
 
-## Pentru utilizatori avansați — instalare via PowerShell
+## Cum se instalează (zero comenzi PowerShell)
 
-Dacă preferi linia de comandă, deschide **PowerShell ca Administrator** și rulează:
+Studentul are deja **Claude Desktop** sau **VS Code cu extensia Claude** (vine cu abonamentul Claude). Folosim Claude pentru a face setup-ul automat — tu doar îi dai instrucțiunile.
 
-```powershell
-Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force; $i="$env:TEMP\genesyum-install.ps1"; irm "https://raw.githubusercontent.com/byraul93/genesyum-installer/main/install.ps1" -OutFile $i; & $i
+### Pasul 1 — Deschide Claude
+
+- **Claude Desktop:** click pe iconița Claude → New Chat
+- **VS Code:** instalează extensia [Claude](https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code), apoi `Ctrl+Shift+P` → "Claude: New Chat"
+
+### Pasul 2 — Paste acest mesaj în chat
+
+```
+Te rog citește https://raw.githubusercontent.com/byraul93/genesyum-installer/main/SETUP.md și execută toți pașii pentru mine.
+
+Token-ul meu Genesyum: github_pat_XXXXXXXXXXXXXXXX
 ```
 
+(Înlocuiește `github_pat_XXX...` cu token-ul real primit pe email/Telegram de la support@genesyum.com.)
+
+### Pasul 3 — Lasă Claude să facă setup-ul
+
+Claude va:
+- Verifica prerequisitele (git, node)
+- Adăuga marketplace-ul privat Genesyum (cu token-ul tău)
+- Instala 3 plugins Genesyum (core, nisa, build-ops)
+- Instala 5 plugins dependențe (telegram, shopify, playwright, frontend-design, context7)
+- Configura `settings.json` (cu backup la cel existent)
+- Te întreba dacă vrei Telegram bot (opțional)
+- Verifica totul + raporta status
+
+Durată: 5-10 minute.
+
+### Pasul 4 — Restart Claude
+
+După ce Claude raportează ✅ **Setup Genesyum complet!**:
+1. Închide complet Claude Desktop / VS Code
+2. Redeschide
+3. Într-o sesiune nouă: scrie `/genesyum-core:start`
+4. GenyAR (mentorul AI) începe onboarding-ul
+
 ---
 
-## Ce se instalează
+## Pentru mentori / contributori
 
-- Node.js 18+ LTS (dacă lipsește)
-- Bun runtime (pentru bot Telegram)
-- Claude Code CLI
-- Shopify CLI
-- 3 plugins Genesyum (core, nisa, build-ops)
-- 5 plugins dependențe (telegram, shopify-ai-toolkit, playwright, frontend-design, context7)
+Repo-uri:
+- **`genesyum-installer`** (acesta, public) — `SETUP.md` cu instrucțiuni pentru Claude
+- **`genesyum-plugins`** (privat) — codul real al plugin-urilor; access read-only via PAT
 
-## Avertizare Windows SmartScreen
+Distribuție token studenți:
+1. Generează un Fine-grained PAT pe `genesyum-plugins` cu Contents: Read-only
+2. Trimite token-ul prin email/Telegram studentului împreună cu link-ul la setup
 
-La prima rulare e posibil ca Windows să afișeze "Windows protected your PC" (SmartScreen). Asta e normal pentru un fișier nou nesemnat:
+Update-uri plugins:
+1. Bump version în `plugin.json` + commit + push
+2. Studenții primesc auto-update silent (PATCH/MINOR) sau confirm prompt (MAJOR)
 
-1. Click **More info**
-2. Click **Run anyway**
-
-Acest mesaj dispare automat după ce mai mulți studenți rulează exe-ul (reputație SmartScreen).
+---
 
 ## Suport
 
@@ -56,4 +69,4 @@ Acest mesaj dispare automat după ce mai mulți studenți rulează exe-ul (reput
 
 ## Licență
 
-© 2026 Raul Paclisan / Genesyum — Uz exclusiv studenți activi.
+© 2026 Raul Paclisan / Genesyum — uz exclusiv studenți activi.
