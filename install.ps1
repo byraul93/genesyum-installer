@@ -146,9 +146,51 @@ try {
     exit 1
 }
 
+# === Git ===
+
+Write-Header "3. GIT"
+
+if (Test-Command 'git') {
+    $gitVer = (git --version 2>&1).Trim()
+    Write-OK "$gitVer (deja instalat)"
+} else {
+    Write-Step "Git NU detectat - instalare via winget..."
+    if (Test-Command 'winget') {
+        $r = Invoke-Native -FilePath 'winget' -Arguments @('install', '--id', 'Git.Git', '-e', '--silent', '--accept-source-agreements', '--accept-package-agreements')
+        if ($r.ExitCode -eq 0) {
+            Update-EnvPath
+            # Adauga manual default Git path daca winget nu a refresh-uit imediat
+            $gitDefault = 'C:\Program Files\Git\cmd'
+            if ((Test-Path "$gitDefault\git.exe") -and ($env:Path -notlike "*$gitDefault*")) {
+                $env:Path = "$gitDefault;$env:Path"
+            }
+            if (Test-Command 'git') {
+                $gitVer = (git --version 2>&1).Trim()
+                Write-OK "$gitVer instalat"
+            } else {
+                Write-Err "Git instalat dar NU detectat in PATH"
+                Write-Info "INCHIDE PowerShell, REDESCHIDE ca Admin si re-ruleaza Genesyum-Install.exe."
+                exit 2
+            }
+        } else {
+            Write-Err "winget install Git.Git esuat (exit $($r.ExitCode))"
+            Write-Info ($r.Output)
+            Write-Info "Instaleaza manual de la https://git-scm.com/download/win apoi re-ruleaza installer-ul."
+            Start-Process 'https://git-scm.com/download/win'
+            exit 1
+        }
+    } else {
+        Write-Warn "winget NU detectat - download manual Git for Windows..."
+        Write-Info "Pe pagina deschisa, click 'Click here to download' si instaleaza (accepta default-uri)."
+        Start-Process 'https://git-scm.com/download/win'
+        Wait-User "Dupa install Git, INCHIDE PowerShell, REDESCHIDE ca Admin si re-ruleaza installer-ul."
+        exit 2
+    }
+}
+
 # === Node.js ===
 
-Write-Header "3. NODE.JS"
+Write-Header "4. NODE.JS"
 
 if (Test-Command 'node') {
     $nodeVer = (node --version 2>&1).Trim().TrimStart('v')
@@ -171,7 +213,7 @@ if (Test-Command 'node') {
 
 # === Bun ===
 
-Write-Header "4. BUN RUNTIME"
+Write-Header "5. BUN RUNTIME"
 
 if (Test-Command 'bun') {
     $bunVer = (bun --version 2>&1).Trim()
@@ -212,7 +254,7 @@ if (Test-Command 'bun') {
 
 # === Claude Code CLI ===
 
-Write-Header "5. CLAUDE CODE CLI"
+Write-Header "6. CLAUDE CODE CLI"
 
 if (Test-Command 'claude') {
     Write-OK "Claude Code (deja instalat)"
@@ -236,7 +278,7 @@ if (Test-Command 'claude') {
 
 # === Shopify CLI ===
 
-Write-Header "6. SHOPIFY CLI"
+Write-Header "7. SHOPIFY CLI"
 
 if (Test-Command 'shopify') {
     Write-OK "Shopify CLI (deja instalat)"
@@ -254,7 +296,7 @@ if (Test-Command 'shopify') {
 
 # === Backup settings.json ===
 
-Write-Header "7. CONFIGURARE CLAUDE CODE"
+Write-Header "8. CONFIGURARE CLAUDE CODE"
 
 $settingsPath = Join-Path $env:USERPROFILE '.claude\settings.json'
 $settingsDir  = Split-Path $settingsPath
@@ -270,7 +312,7 @@ if (Test-Path $settingsPath) {
 
 # === VS Code ===
 
-Write-Header "8. VS CODE (canal chat optional)"
+Write-Header "9. VS CODE (canal chat optional)"
 
 $vsCodeInstalled = Test-Command 'code'
 if ($vsCodeInstalled) {
@@ -296,7 +338,7 @@ if ($vsCodeInstalled) {
 
 # === Plugins ===
 
-Write-Header "9. PLUGINS CLAUDE CODE"
+Write-Header "10. PLUGINS CLAUDE CODE"
 
 Write-Step "Cache credentials git pentru repo privat..."
 # Claude Code marketplace add face git clone in spate; pentru repo privat avem nevoie ca git
@@ -348,7 +390,7 @@ foreach ($p in $plugins) {
 
 # === Telegram Bot ===
 
-Write-Header "10. TELEGRAM BOT (optional)"
+Write-Header "11. TELEGRAM BOT (optional)"
 
 $resp = Read-Host "  Vrei sa folosesti Telegram pentru access mobil? (Y/n)"
 $skipTelegram = ($resp -eq 'n' -or $resp -eq 'N')
@@ -389,7 +431,7 @@ if (-not $skipTelegram) {
 
 # === settings.json ===
 
-Write-Header "11. SETTINGS.JSON"
+Write-Header "12. SETTINGS.JSON"
 
 $settingsContent = @"
 {
@@ -471,7 +513,7 @@ try {
 
 # === state.json initial ===
 
-Write-Header "12. GENESYUM STATE"
+Write-Header "13. GENESYUM STATE"
 
 $genesyumDir = Join-Path $env:USERPROFILE '.genesyum'
 if (-not (Test-Path $genesyumDir)) {
@@ -487,7 +529,7 @@ if (-not (Test-Path $statePath)) {
 
 # === Folder lucru + Desktop shortcuts ===
 
-Write-Header "13. SHORTCUTS DESKTOP"
+Write-Header "14. SHORTCUTS DESKTOP"
 
 $desktop = [Environment]::GetFolderPath('Desktop')
 $workDir = Join-Path $env:USERPROFILE 'Documents\Genesyum'
