@@ -52,21 +52,49 @@ Run each via `Bash` or `PowerShell` tool. Capture stdout.
 
 - `git --version` (any version)
 - `node --version` (must be >= v18; parse the major version number)
+- `python --version` (must be a real Python 3.x — see special check below)
 - `claude --version` (you're running inside it; should return immediately)
 
-**If `git` is missing:** install it yourself via winget:
-```
-winget install --id Git.Git -e --silent --accept-source-agreements --accept-package-agreements
-```
-After winget completes, refresh PATH (read `Path` from `User` and `Machine` env vars, append `C:\Program Files\Git\cmd`), then re-test `git --version`. If it still fails, tell the student that Git could not be installed automatically and the setup is blocked.
+### Git
+**If missing:** `winget install --id Git.Git -e --silent --accept-source-agreements --accept-package-agreements`
+After install, refresh PATH (User+Machine env vars + `C:\Program Files\Git\cmd`) and re-test. Block setup if still missing.
 
-**If `node` is missing or below v18:** install yourself:
-```
-winget install --id OpenJS.NodeJS.LTS -e --silent --accept-source-agreements --accept-package-agreements
-```
-Refresh PATH, re-test. Same blocking rule on failure.
+### Node.js
+**If missing or below v18:** `winget install --id OpenJS.NodeJS.LTS -e --silent --accept-source-agreements --accept-package-agreements`
+Refresh PATH, re-test.
 
-Update student briefly: "✅ Verificat: git, node, claude — toate prezente." (or report what's missing).
+### Python (CRITICAL — required for Genesyum hooks)
+
+**This is non-negotiable.** All Genesyum anti-hallucination hooks are Python scripts. Without real Python, hooks fail silently → identity injection broken, anti-hallucination dead, GenyAR responds as generic Claude.
+
+**On Windows, beware of the Microsoft Store stub.** Running `python --version` may return *"Python wasn't found"* even though `which python` shows a path inside `WindowsApps`. That path is a stub that only opens the Store; it's not real Python.
+
+**Detection logic (run yourself):**
+1. Run `python --version` and capture stdout + stderr + exit code.
+2. If exit ≠ 0, OR stdout/stderr contains `wasn't found`, `not found`, or anything other than `Python 3.x.y` → **Python is effectively missing**.
+3. Also try `python3 --version` (Mac/Linux convention).
+
+**If Python is missing or stub:**
+```
+winget install --id Python.Python.3.13 -e --silent --accept-source-agreements --accept-package-agreements
+```
+
+After winget completes:
+1. Refresh PATH (User+Machine env vars).
+2. Run `python --version` again. If it still returns the stub message:
+   - Tell the student: *"Am instalat Python dar PATH-ul nu s-a actualizat în sesiunea curentă. Te rog închide complet Claude (toate ferestrele) și redeschide-l, apoi re-rulează setup-ul. PATH-ul Windows se va încărca proaspăt cu Python real."*
+   - Stop the setup with exit code 2 ("restart needed").
+3. **Verify the hook stack works** before continuing — this is the smoke test that catches stub Python:
+   ```powershell
+   echo "{}" | python -c "import json, sys; print(json.dumps({'ok': True}))"
+   ```
+   Expected stdout: `{"ok": true}`. If anything else (Store opens, error message, empty), Python is still broken — block setup with the same restart message.
+
+### Final prerequisite report
+
+After all four checks pass: "✅ Verificat: git, node, python, claude — toate prezente și funcționale."
+
+If any check fails or required restart, stop and report exactly what's blocked.
 
 ---
 
@@ -414,6 +442,7 @@ While doing this setup:
 - **The Telegram bot display name MUST be `GenyAR`** (Step 8a). If the student picks a different name, ask them to redo with `GenyAR`. The username (handle) is personal and free-form.
 - **Do not invent MCP tool names.** Specifically `browser_scroll` does NOT exist in the Playwright MCP tool list. Stick to the names in the settings.json template.
 - **PowerShell stderr is not always an error.** When running `npm install`, `claude plugin install`, `git`, etc. via PowerShell, native command stderr (e.g., "npm notice") gets wrapped as ErrorRecords if `$ErrorActionPreference='Stop'`. Use `$LASTEXITCODE` to determine real success/failure, not the presence of stderr text.
+- **Python stub on Windows is fatal silently.** Microsoft Store ships a `python.exe` stub on Windows 10/11 that opens the Store instead of running Python. Plugin hooks fail at this silently → identity injection broken, anti-hallucination dead. ALWAYS verify Python via the smoke test: `echo "{}" | python -c "print('ok')"`. If output is anything other than `ok`, install real Python via winget BEFORE proceeding.
 
 ---
 
@@ -426,6 +455,8 @@ While doing this setup:
 | `git not found or in unsafe location` | Git for Windows not installed | Install Git from https://git-scm.com/download/win |
 | Plugin install: "marketplace not found" | Marketplace add failed silently | Re-run Step 3 |
 | Settings.json is invalid after edit | BOM or syntax error | Re-read backup `*.bak.*` and merge again carefully |
+| Bot Telegram răspunde ca "Claude" generic, nu ca GenyAR | Hook Python eșuează silent — Python lipsește sau e stub Microsoft Store | Run `winget install --id Python.Python.3.13 -e --silent --accept-source-agreements --accept-package-agreements`, apoi restart Claude complet. Verifică cu: `echo "{}" \| python -c "print('ok')"` — trebuie să printeze `ok`, NU să deschidă Microsoft Store |
+| `python --version` deschide Microsoft Store | App execution alias points to Store stub instead of real Python | Win11: Settings → Apps → Advanced app settings → App execution aliases → disable `python.exe` și `python3.exe`. Apoi instalează Python via winget |
 
 ---
 
