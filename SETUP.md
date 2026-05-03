@@ -214,20 +214,89 @@ Create `~/.genesyum/state.json` if it does not already exist (do NOT overwrite e
 Ask:
 > "Vrei să folosești Telegram pentru a vorbi cu mine de pe telefon? (Y/n)"
 
-If yes:
-1. Tell them to:
-   - Open Telegram on their phone
-   - Search `@BotFather`
-   - Send `/newbot`
-   - Choose a name (e.g., "GenyAR Mentor") and username (e.g., `genyar_xxx_bot`)
-   - Copy the token (format: `123456789:AAH...`)
-2. Ask them to paste the bot token here.
-3. Validate format: `^\d{8,}:[A-Za-z0-9_-]{30,}$`. If invalid, ask again.
-4. Save it (UTF-8 no BOM, no trailing newline) at:
-   - Path: `%USERPROFILE%\.claude\channels\telegram\.env` (Windows) or `~/.claude/channels/telegram/.env` (Mac/Linux)
-   - Content: `TELEGRAM_BOT_TOKEN=<token>`
+If no, skip this entire step. If yes:
 
-Tell them they will pair their phone after restart by running `/telegram:access pair <code>` once the bot DMs them a 6-character code on first message.
+### 8a — Student creates the bot
+
+Tell them:
+> "Singurul pas manual e să-mi creezi bot-ul. Durează 30 secunde:
+>
+> 1. Deschide pe telefon: https://t.me/BotFather
+> 2. Trimite: `/newbot`
+> 3. Nume (orice, ex: 'GenyAR mentor'): trimite numele
+> 4. Username (terminat în 'bot', ex: 'genyar_xxx_bot'): trimite username-ul
+> 5. BotFather îți răspunde cu un TOKEN (format: `123456789:AAH...`)
+> 6. Copiază token-ul și paste-l aici."
+
+Wait for the token. Validate format: `^\d{8,}:[A-Za-z0-9_-]{30,}$`. If invalid, ask again.
+
+### 8b — Save token
+
+Save at:
+- Windows: `%USERPROFILE%\.claude\channels\telegram\.env`
+- Mac/Linux: `~/.claude/channels/telegram/.env`
+
+Content (UTF-8, no BOM, no trailing newline):
+```
+TELEGRAM_BOT_TOKEN=<token>
+```
+
+### 8c — Create auto-start launcher (Windows only)
+
+This is critical — student should NEVER need to open a terminal again. Create a `.bat` file that launches Claude minimized, and place a shortcut to it in the Startup folder so the bot auto-starts on every Windows login.
+
+**Create launcher** at `%USERPROFILE%\Documents\Genesyum\Genesyum-Bot.bat` with content:
+
+```bat
+@echo off
+title Genesyum Bot
+cd /d "%USERPROFILE%\Documents\Genesyum"
+start /min "" claude
+```
+
+(Create the `Genesyum` folder if missing.)
+
+**Add to Startup folder** so it auto-starts on Windows login:
+
+Use this PowerShell command to create the shortcut in the Startup folder:
+
+```powershell
+$WshShell = New-Object -ComObject WScript.Shell
+$startup = [Environment]::GetFolderPath('Startup')
+$shortcut = $WshShell.CreateShortcut("$startup\Genesyum Bot.lnk")
+$shortcut.TargetPath = "$env:USERPROFILE\Documents\Genesyum\Genesyum-Bot.bat"
+$shortcut.WorkingDirectory = "$env:USERPROFILE\Documents\Genesyum"
+$shortcut.WindowStyle = 7
+$shortcut.Description = "Genesyum Telegram bot - porneste automat cu Windows"
+$shortcut.Save()
+```
+
+(`WindowStyle = 7` = minimized.)
+
+Also place a copy on Desktop so the student can manually start/restart the bot if needed:
+
+```powershell
+$WshShell = New-Object -ComObject WScript.Shell
+$desktop = [Environment]::GetFolderPath('Desktop')
+$shortcut = $WshShell.CreateShortcut("$desktop\Genesyum Bot.lnk")
+$shortcut.TargetPath = "$env:USERPROFILE\Documents\Genesyum\Genesyum-Bot.bat"
+$shortcut.WorkingDirectory = "$env:USERPROFILE\Documents\Genesyum"
+$shortcut.WindowStyle = 7
+$shortcut.Description = "Porneste Genesyum bot Telegram"
+$shortcut.Save()
+```
+
+### 8d — Tell the student what happens next
+
+Tell them:
+> "Setup Telegram complet! Acum:
+>
+> 1. Restart Claude (Step 10 te ghidează)
+> 2. După restart, deschide Telegram pe telefon și DM-uiește bot-ul tău (prima oară orice mesaj). Bot-ul îți va trimite un cod de 6 caractere.
+> 3. Trimite-mi codul aici (în Claude) ca să facem pairing-ul: `/telegram:access pair <COD>`
+> 4. Apoi: `/telegram:access policy allowlist` ca să blochezi bot-ul doar pentru tine
+>
+> **De atunci înainte:** la fiecare boot Windows, bot-ul pornește singur (fereastră minimizată în taskbar). Niciodată nu mai trebuie să deschizi PowerShell sau să rulezi comenzi. Dacă vrei să-l oprești, click pe fereastra Genesyum Bot din taskbar și închide-o. Ca să-l repornești manual, dublu-click pe iconița 'Genesyum Bot' de pe Desktop."
 
 ---
 
@@ -254,11 +323,13 @@ When everything passes, send the student this exact message in Romanian:
 >
 > Plugins instalate: 3 Genesyum (core/nisa/build-ops) + 5 dependențe (telegram/shopify/playwright/frontend-design/context7).
 >
-> **Pasul următor:** trebuie să RESTARTEZI Claude (închide complet și redeschide) pentru ca plugins-urile să se activeze.
+> **Pasul următor:** închide complet Claude și redeschide-l. După restart:
 >
-> După restart, scrie `/genesyum-core:start` ca să începi onboarding-ul cu GenyAR.
+> 1. Scrie `/genesyum-core:start` — GenyAR (mentorul tău AI) preia de aici.
 >
-> Dacă ai configurat Telegram, după restart rulează în terminal: `/telegram:access pair <cod>` cu codul pe care ți-l trimite bot-ul când îi dai DM pe telefon.
+> Dacă ai configurat Telegram (Step 8):
+> 2. Bot-ul Genesyum e deja setat să pornească automat la fiecare boot Windows (icoana **Genesyum Bot** e și pe Desktop dacă vrei să-l pornești/oprești manual).
+> 3. Pentru pairing inițial: după restart Claude, deschide Telegram pe telefon → DM-uiește bot-ul tău o dată → primești cod 6 caractere → întoarce-te la Claude pe PC și scrie `/telegram:access pair <COD>` apoi `/telegram:access policy allowlist`. Asta se face **o singură dată**, niciodată repetat.
 
 If anything failed, instead report the exact failures with line-by-line details — DO NOT pretend success.
 
