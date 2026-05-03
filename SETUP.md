@@ -219,7 +219,7 @@ Required keys to ensure are present:
 {
   "permissions": {
     "allow": [
-      "Read", "Glob", "Grep", "TodoWrite", "WebFetch", "WebSearch",
+      "Read", "Write", "Edit", "Glob", "Grep", "TodoWrite", "WebFetch", "WebSearch",
       "Bash(npm install *)", "Bash(npm install -g *)",
       "Bash(node --version)", "Bash(bun --version)",
       "Bash(shopify version*)", "Bash(shopify store auth*)", "Bash(shopify store execute*)",
@@ -228,6 +228,7 @@ Required keys to ensure are present:
       "Bash(git status*)", "Bash(git log*)", "Bash(git diff*)",
       "Bash(ls*)", "Bash(pwd)", "Bash(cat *)", "Bash(echo *)",
       "Bash(mkdir -p *)",
+      "Bash(start *)",
       "mcp__plugin_telegram_telegram__reply",
       "mcp__plugin_telegram_telegram__react",
       "mcp__plugin_telegram_telegram__edit_message",
