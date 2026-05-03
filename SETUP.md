@@ -1,7 +1,33 @@
 # Genesyum AI — Setup Instructions for Claude
 
 **Audience:** Claude (running in student's Claude Desktop or VS Code session).
-**Purpose:** This file tells you, Claude, how to set up the Genesyum mentor system on the student's machine. Read carefully and execute step by step.
+**Purpose:** Set up the Genesyum mentor system on the student's machine.
+
+---
+
+## 🚨 CRITICAL — How you MUST execute this setup
+
+You have full tool access on the student's machine: `Bash`, `PowerShell`, `Write`, `Edit`, `Read`, `WebFetch`, `TodoWrite`. **YOU execute every step yourself. The student does NOTHING in a terminal.**
+
+### Rules of execution
+
+1. **Run every command yourself** with the `Bash` or `PowerShell` tool. Do NOT show the command and ask the student to run it. Do NOT tell them to "open a terminal."
+2. **Write every file yourself** with the `Write` or `Edit` tool. Do NOT ask the student to create files manually.
+3. **Use `TodoWrite`** at the start to plan all 10 steps. Update progress as you go.
+4. **The ONLY thing the student does manually is create the Telegram bot in BotFather (Step 8a)** — because BotFather is a Telegram bot on their phone and you cannot reach it. Everything else = your job.
+5. **Permission prompts:** if the harness asks the student to approve a tool call, just wait — they'll approve. Do not abandon the step.
+6. **When you cannot run something** (e.g., a permission was denied, a tool is missing), stop and tell the student exactly what blocked you with the error verbatim. Do NOT pivot to "please run this command."
+
+### Communication style with the student
+
+The student does NOT need to see commands or technical detail. While executing, give them brief progress updates in Romanian, like:
+
+> ✅ Verificat: git și node sunt instalate.
+> 🔧 Adaug marketplace-ul Genesyum...
+> 🔧 Instalez plugin genesyum-core...
+> ✅ Plugin genesyum-core instalat.
+
+Do NOT show shell commands, JSON snippets, or tool names. The student should feel like they're watching an assistant work, not reading documentation.
 
 ---
 
@@ -17,118 +43,111 @@ You will install:
 
 ---
 
-## Prerequisites — verify first
+## Prerequisites — execute these checks yourself
 
-```bash
-git --version       # any version
-node --version      # >= v18
-claude --version    # any version (you're running inside it)
+Run each via `Bash` or `PowerShell` tool. Capture stdout.
+
+- `git --version` (any version)
+- `node --version` (must be >= v18; parse the major version number)
+- `claude --version` (you're running inside it; should return immediately)
+
+**If `git` is missing:** install it yourself via winget:
 ```
+winget install --id Git.Git -e --silent --accept-source-agreements --accept-package-agreements
+```
+After winget completes, refresh PATH (read `Path` from `User` and `Machine` env vars, append `C:\Program Files\Git\cmd`), then re-test `git --version`. If it still fails, tell the student that Git could not be installed automatically and the setup is blocked.
 
-If `git` is missing → ask student to install Git for Windows from https://git-scm.com/download/win, then re-run setup.
-If `node` is missing → ask student to install Node.js LTS from https://nodejs.org, then re-run setup.
+**If `node` is missing or below v18:** install yourself:
+```
+winget install --id OpenJS.NodeJS.LTS -e --silent --accept-source-agreements --accept-package-agreements
+```
+Refresh PATH, re-test. Same blocking rule on failure.
+
+Update student briefly: "✅ Verificat: git, node, claude — toate prezente." (or report what's missing).
 
 ---
 
-## Step 1 — Verify GitHub access
+## Step 1 — Verify GitHub access (execute yourself)
 
-The Genesyum plugins repo is **private**. The student must have already been **invited as a collaborator** by Raul (admin) and **accepted** the invitation via the email/notification GitHub sent them.
-
-Check that git is authenticated with the student's GitHub account:
-
-```bash
-git config --global user.email
-git config --global user.name
+The Genesyum plugins repo is private. Run:
 ```
-
-If both are empty, ask the student:
-> "Trebuie să fii logat cu contul GitHub care a primit invitația la repo-ul Genesyum. Ai instalată aplicația **GitHub Desktop** sau ai folosit **VS Code → Sign in with GitHub**? Dacă nu, ruleaza în terminal: `gh auth login` (necesită GitHub CLI). Sau loghează-te din GitHub Desktop și redeschide Claude."
-
-Test access to the private repo:
-
-```bash
 git ls-remote https://github.com/byraul93/genesyum-plugins HEAD
 ```
 
-- ✅ If output is a SHA hash → access OK, continue.
-- ❌ If error `Authentication failed` or `Repository not found`:
-  - Tell student: *"Nu am access la repo-ul Genesyum cu contul tău GitHub. Asigură-te că ai acceptat invitația primită pe email de la Raul/Genesyum. Verifică la https://github.com/byraul93/genesyum-plugins/invitations. Dacă nu ai primit invitație, contactează `support@genesyum.com` cu username-ul GitHub."*
-  - **STOP** — do not continue setup.
+- ✅ If output is a SHA hash → access OK, continue silently.
+- ❌ If `Authentication failed` or `Repository not found`:
+  - Stop the setup.
+  - Tell the student: *"Nu am access la repo-ul Genesyum cu contul tău GitHub. Verifică două lucruri: (1) Ai acceptat invitația primită pe email de la support@genesyum.com? Verifică la https://github.com/byraul93/genesyum-plugins/invitations. (2) Ești logat cu contul GitHub corect? Cea mai simplă verificare: deschide GitHub Desktop sau VS Code, vezi că ești sign-in cu același cont care a primit invitația. Dacă tot nu merge, scrie la support@genesyum.com cu username-ul tău GitHub."*
 
 ---
 
-## Step 2 — Install Bun runtime (for Telegram bot bridge)
+## Step 2 — Install Bun runtime (execute yourself)
 
-```bash
-bun --version
-```
+Run `bun --version`.
 
-If missing, install via winget (Windows):
-```bash
-winget install --id Oven-sh.Bun -e --silent --accept-source-agreements --accept-package-agreements
-```
+- If exit 0 → already installed, continue.
+- If missing → install yourself:
+  - Windows: `winget install --id Oven-sh.Bun -e --silent --accept-source-agreements --accept-package-agreements`
+  - Mac/Linux: `curl -fsSL https://bun.sh/install | bash`
+- After install, refresh PATH (User+Machine env vars + `%USERPROFILE%\.bun\bin`), re-test.
 
-Mac/Linux:
-```bash
-curl -fsSL https://bun.sh/install | bash
-```
-
-After install, verify `bun --version`. If still failing, tell student to restart their terminal and re-run setup.
+Update: "✅ Bun instalat."
 
 ---
 
-## Step 3 — Add the Genesyum marketplace
+## Step 3 — Add the Genesyum marketplace (execute yourself)
 
-```bash
-claude plugin marketplace add byraul93/genesyum-plugins
-```
+Run: `claude plugin marketplace add byraul93/genesyum-plugins`
 
-If git was authenticated correctly (Step 1), this works without any extra auth. If it fails with `Failed to clone marketplace repository`, the student's git auth is broken — re-run Step 1 verification and ask them to fix GitHub login.
+If it fails with `Failed to clone`, the git auth is broken — go back to Step 1 to diagnose. Do NOT continue.
 
-Verify:
-```bash
-claude plugin marketplace list
-```
+Verify with `claude plugin marketplace list` — output should contain `genesyum-dev`.
 
-Should show `genesyum-dev`.
+Update: "✅ Marketplace Genesyum adăugat."
 
 ---
 
-## Step 4 — Install the 3 Genesyum plugins
+## Step 4 — Install the 3 Genesyum plugins (execute yourself)
 
-```bash
-claude plugin install genesyum-core@genesyum-dev --scope user
-claude plugin install genesyum-nisa@genesyum-dev --scope user
-claude plugin install genesyum-build-ops@genesyum-dev --scope user
-```
+Run each, sequentially, waiting for each to finish:
+- `claude plugin install genesyum-core@genesyum-dev --scope user`
+- `claude plugin install genesyum-nisa@genesyum-dev --scope user`
+- `claude plugin install genesyum-build-ops@genesyum-dev --scope user`
 
-If any fails, capture the error output and report it to the student before continuing — do NOT silently skip.
+If any fails, capture the error verbatim and report it to the student. Do NOT silently skip.
 
----
-
-## Step 5 — Install the 5 dependency plugins (public, no auth)
-
-```bash
-claude plugin marketplace add anthropics/claude-plugins-official
-claude plugin install telegram@claude-plugins-official --scope user
-claude plugin install shopify-ai-toolkit@claude-plugins-official --scope user
-claude plugin install playwright@claude-plugins-official --scope user
-claude plugin install frontend-design@claude-plugins-official --scope user
-claude plugin install context7@claude-plugins-official --scope user
-```
-
-(If `claude-plugins-official` marketplace is already configured, the first command will say so — that's fine, continue.)
+Update progressively: "✅ genesyum-core instalat", "✅ genesyum-nisa instalat", "✅ genesyum-build-ops instalat".
 
 ---
 
-## Step 6 — Configure `~/.claude/settings.json`
+## Step 5 — Install the 5 dependency plugins (execute yourself)
 
-**Important:** if the file already exists, BACK IT UP first (do not destroy student's existing config):
+First add the public marketplace if not already added:
+- `claude plugin marketplace add anthropics/claude-plugins-official` (ignore "already exists" warning)
 
-1. Read existing `~/.claude/settings.json` (if any).
-2. Save backup at `~/.claude/settings.json.bak.<timestamp>`.
-3. Merge the keys below into the existing JSON. Preserve any custom keys (hooks, mcpServers, etc.) the student already had.
-4. Write back as UTF-8 without BOM.
+Then install each:
+- `claude plugin install telegram@claude-plugins-official --scope user`
+- `claude plugin install shopify-ai-toolkit@claude-plugins-official --scope user`
+- `claude plugin install playwright@claude-plugins-official --scope user`
+- `claude plugin install frontend-design@claude-plugins-official --scope user`
+- `claude plugin install context7@claude-plugins-official --scope user`
+
+Update: "✅ Toate plugins instalate (3 Genesyum + 5 dependențe)."
+
+---
+
+## Step 6 — Configure `~/.claude/settings.json` (execute yourself)
+
+Use the `Read`, `Write`, and `Bash` tools to do this — do NOT instruct the student.
+
+1. Use `Read` on `~/.claude/settings.json`. If it exists:
+   - Use `Bash` to copy it: `cp ~/.claude/settings.json ~/.claude/settings.json.bak.$(date +%Y%m%d-%H%M%S)` (or PowerShell equivalent on Windows).
+   - Parse the existing JSON content.
+2. Compute the merged JSON object: existing JSON + the keys below. Preserve any existing custom keys (hooks, mcpServers, theme, etc.) the student had.
+3. Use `Write` to save the merged result to `~/.claude/settings.json` as UTF-8 without BOM.
+4. Validate by running `Bash`: `node -e "JSON.parse(require('fs').readFileSync('<path>', 'utf8'))"` — if it errors, restore from the backup and tell the student.
+
+Update: "✅ settings.json configurat (cu backup la cel existent)."
 
 Required keys to ensure are present:
 
@@ -199,24 +218,27 @@ After writing, validate the file is valid JSON before continuing.
 
 ---
 
-## Step 7 — Initialize Genesyum state
+## Step 7 — Initialize Genesyum state (execute yourself)
 
-Create `~/.genesyum/state.json` if it does not already exist (do NOT overwrite existing):
+Use `Bash` and `Write`:
 
-```json
-{"schema_version":"2.0.0","student_id":null}
-```
+1. Check if `~/.genesyum/state.json` exists. If yes, leave it alone.
+2. If no, `mkdir -p ~/.genesyum` then `Write` content `{"schema_version":"2.0.0","student_id":null}` to that path (UTF-8 no BOM).
+
+Update (only if created): "✅ State Genesyum inițializat."
 
 ---
 
-## Step 8 — Telegram bot (optional, ask student)
+## Step 8 — Telegram bot (optional)
 
 Ask:
-> "Vrei să folosești Telegram pentru a vorbi cu mine de pe telefon? (Y/n)"
+> "Vrei să folosești Telegram ca să-mi vorbești de pe telefon? (Y/n)"
 
-If no, skip this entire step. If yes:
+If no, skip this entire step.
 
-### 8a — Student creates the bot
+If yes, **the only manual part for the student is creating the bot in BotFather** (Step 8a). Everything after — saving the token, creating the launcher, registering auto-start — **YOU execute yourself**. The student does NOT need to open any terminal.
+
+### 8a — Student creates the bot (this is THE ONLY manual part)
 
 Tell them:
 > "Singurul pas manual e să-mi creezi bot-ul. Durează 30 secunde:
@@ -235,88 +257,73 @@ Wait until they confirm they used `GenyAR` as the display name before proceeding
 
 Wait for the token. Validate format: `^\d{8,}:[A-Za-z0-9_-]{30,}$`. If invalid, ask again.
 
-### 8b — Save token
+### 8b — Save token (execute yourself)
 
-Save at:
-- Windows: `%USERPROFILE%\.claude\channels\telegram\.env`
-- Mac/Linux: `~/.claude/channels/telegram/.env`
+Use `Bash`/`PowerShell` and `Write`:
 
-Content (UTF-8, no BOM, no trailing newline):
+1. Create directory `~/.claude/channels/telegram/` if missing.
+2. `Write` file `~/.claude/channels/telegram/.env` with content `TELEGRAM_BOT_TOKEN=<token>` — UTF-8, no BOM, no trailing newline.
+
+Update: "✅ Token salvat."
+
+### 8c — Create auto-start launcher (execute yourself, Windows)
+
+The goal: the student NEVER needs to open a terminal again. Bot starts automatically on every Windows login.
+
+**Step 8c-1:** Use `Bash`/`PowerShell` to create folder `%USERPROFILE%\Documents\Genesyum` if missing.
+
+**Step 8c-2:** Use `Write` to create `%USERPROFILE%\Documents\Genesyum\Genesyum-Bot.bat` with content:
 ```
-TELEGRAM_BOT_TOKEN=<token>
-```
-
-### 8c — Create auto-start launcher (Windows only)
-
-This is critical — student should NEVER need to open a terminal again. Create a `.bat` file that launches Claude minimized, and place a shortcut to it in the Startup folder so the bot auto-starts on every Windows login.
-
-**Create launcher** at `%USERPROFILE%\Documents\Genesyum\Genesyum-Bot.bat` with content:
-
-```bat
 @echo off
 title Genesyum Bot
 cd /d "%USERPROFILE%\Documents\Genesyum"
 start /min "" claude
 ```
 
-(Create the `Genesyum` folder if missing.)
-
-**Add to Startup folder** so it auto-starts on Windows login:
-
-Use this PowerShell command to create the shortcut in the Startup folder:
+**Step 8c-3:** Use `PowerShell` to create the Startup shortcut (WindowStyle 7 = minimized). Run this exact command:
 
 ```powershell
-$WshShell = New-Object -ComObject WScript.Shell
-$startup = [Environment]::GetFolderPath('Startup')
-$shortcut = $WshShell.CreateShortcut("$startup\Genesyum Bot.lnk")
-$shortcut.TargetPath = "$env:USERPROFILE\Documents\Genesyum\Genesyum-Bot.bat"
-$shortcut.WorkingDirectory = "$env:USERPROFILE\Documents\Genesyum"
-$shortcut.WindowStyle = 7
-$shortcut.Description = "Genesyum Telegram bot - porneste automat cu Windows"
-$shortcut.Save()
+$WshShell = New-Object -ComObject WScript.Shell; $startup = [Environment]::GetFolderPath('Startup'); $shortcut = $WshShell.CreateShortcut("$startup\Genesyum Bot.lnk"); $shortcut.TargetPath = "$env:USERPROFILE\Documents\Genesyum\Genesyum-Bot.bat"; $shortcut.WorkingDirectory = "$env:USERPROFILE\Documents\Genesyum"; $shortcut.WindowStyle = 7; $shortcut.Description = "Genesyum Telegram bot - porneste automat cu Windows"; $shortcut.Save()
 ```
 
-(`WindowStyle = 7` = minimized.)
-
-Also place a copy on Desktop so the student can manually start/restart the bot if needed:
+**Step 8c-4:** Use `PowerShell` to create the Desktop shortcut for manual start/stop:
 
 ```powershell
-$WshShell = New-Object -ComObject WScript.Shell
-$desktop = [Environment]::GetFolderPath('Desktop')
-$shortcut = $WshShell.CreateShortcut("$desktop\Genesyum Bot.lnk")
-$shortcut.TargetPath = "$env:USERPROFILE\Documents\Genesyum\Genesyum-Bot.bat"
-$shortcut.WorkingDirectory = "$env:USERPROFILE\Documents\Genesyum"
-$shortcut.WindowStyle = 7
-$shortcut.Description = "Porneste Genesyum bot Telegram"
-$shortcut.Save()
+$WshShell = New-Object -ComObject WScript.Shell; $desktop = [Environment]::GetFolderPath('Desktop'); $shortcut = $WshShell.CreateShortcut("$desktop\Genesyum Bot.lnk"); $shortcut.TargetPath = "$env:USERPROFILE\Documents\Genesyum\Genesyum-Bot.bat"; $shortcut.WorkingDirectory = "$env:USERPROFILE\Documents\Genesyum"; $shortcut.WindowStyle = 7; $shortcut.Description = "Porneste Genesyum bot Telegram"; $shortcut.Save()
 ```
+
+**Step 8c-5:** Verify both `.lnk` files exist with `Bash` (`Test-Path` in PS or `[ -f ... ]` in bash).
+
+Update: "✅ Bot configurat să pornească automat la fiecare boot Windows. Iconița 'Genesyum Bot' e și pe Desktop dacă vrei să-l pornești/oprești manual."
 
 ### 8d — Tell the student what happens next
 
-Tell them:
-> "Setup Telegram complet! Acum:
+Send this message to them:
+> "Setup Telegram complet! Bot-ul e configurat să pornească automat la fiecare boot Windows — niciodată nu mai trebuie să deschizi terminal.
 >
-> 1. Restart Claude (Step 10 te ghidează)
-> 2. După restart, deschide Telegram pe telefon și DM-uiește bot-ul tău (prima oară orice mesaj). Bot-ul îți va trimite un cod de 6 caractere.
-> 3. Trimite-mi codul aici (în Claude) ca să facem pairing-ul: `/telegram:access pair <COD>`
-> 4. Apoi: `/telegram:access policy allowlist` ca să blochezi bot-ul doar pentru tine
+> **Pairing-ul (o singură dată, după restart Claude):**
+> 1. La pasul 10 vei restarta Claude.
+> 2. După restart, deschide Telegram pe telefon și caută bot-ul **GenyAR** cu username-ul pe care l-ai ales (ex: `@genyar_xxx_bot`).
+> 3. Dă-i orice mesaj (ex: 'salut'). Bot-ul îți va trimite un cod de 6 caractere.
+> 4. Întoarce-te în Claude pe PC și scrie: `/telegram:access pair <COD>`
+> 5. Apoi: `/telegram:access policy allowlist`
 >
-> **De atunci înainte:** la fiecare boot Windows, bot-ul pornește singur (fereastră minimizată în taskbar). Niciodată nu mai trebuie să deschizi PowerShell sau să rulezi comenzi. Dacă vrei să-l oprești, click pe fereastra Genesyum Bot din taskbar și închide-o. Ca să-l repornești manual, dublu-click pe iconița 'Genesyum Bot' de pe Desktop."
+> **De atunci înainte:** PC pornește → bot pornit deja, scrii de pe telefon → primești răspuns. Zero terminal."
 
 ---
 
-## Step 9 — Final verification
+## Step 9 — Final verification (execute yourself)
 
-```bash
-claude plugin list
-```
+Run `claude plugin list` via `Bash`. Verify output contains all 8 plugins enabled. If any are missing, retry Step 4/5 for that specific one.
 
-Should show all 8 plugins enabled. If any are missing, retry Step 4/5 for that one.
+Use `Read` on `~/.claude/settings.json` and confirm:
+- `enabledPlugins` has all 8 keys set to `true`
+- `extraKnownMarketplaces` includes both `genesyum-dev` and `claude-plugins-official`
+- JSON parses cleanly
 
-Read `~/.claude/settings.json` and verify:
-- `enabledPlugins` has all 8 entries set to `true`
-- `extraKnownMarketplaces` has `genesyum-dev` and `claude-plugins-official`
-- The JSON is valid (no parse errors)
+If any check fails, do NOT report success. Tell the student exactly what's broken.
+
+Update: "✅ Verificare finală: toate plugins active, settings.json valid."
 
 ---
 
