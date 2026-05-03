@@ -4,7 +4,7 @@
 
 ## Install Genesyum (Windows) — 2 click-uri
 
-1. **Descarcă** `Genesyum-Install.exe` din [Releases](https://github.com/byraul93/genesyum-installer/releases/latest)
+1. **Descarcă** [`Genesyum-Install.exe`](https://github.com/byraul93/genesyum-installer/raw/main/Genesyum-Install.exe) (51 KB)
 2. **Dublu-click** pe fișier → confirmă "Yes" la prompt-ul Windows (UAC) → installer pornește automat
 
 ✅ **Niciun PowerShell, niciun copy-paste, nicio comandă.**
