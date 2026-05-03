@@ -7,8 +7,7 @@
 Open **PowerShell as Administrator** and paste:
 
 ```powershell
-Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force
-iex (irm "https://raw.githubusercontent.com/byraul93/genesyum-installer/main/install.ps1")
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force; $i="$env:TEMP\genesyum-install.ps1"; irm "https://raw.githubusercontent.com/byraul93/genesyum-installer/main/install.ps1" -OutFile $i; & $i
 ```
 
 Wizard will ask for:

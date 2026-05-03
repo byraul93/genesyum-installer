@@ -154,21 +154,36 @@ if (Test-Command 'bun') {
     $bunVer = (bun --version 2>&1).Trim()
     Write-OK "Bun $bunVer (deja instalat)"
 } else {
-    Write-Step "Instalare Bun..."
+    Write-Step "Instalare Bun (poate dura 30-60 sec)..."
     try {
-        Invoke-RestMethod 'https://bun.sh/install.ps1' | Invoke-Expression
-        $env:Path = "$env:USERPROFILE\.bun\bin;" + $env:Path
-        if (Test-Command 'bun') {
-            Write-OK "Bun instalat"
+        # Bun installer printeaza output intern; redirect la null
+        $bunInstallScript = Invoke-RestMethod 'https://bun.sh/install.ps1'
+        # Run intr-un scriptblock izolat ca sa nu ne afecteze sesiunea curenta
+        $null = & ([scriptblock]::Create($bunInstallScript)) 2>&1
+
+        # Refresh PATH din ambele scope (User + Machine + adauga manual Bun bin)
+        $bunPath = "$env:USERPROFILE\.bun\bin"
+        $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+        $userPath    = [Environment]::GetEnvironmentVariable('Path', 'User')
+        $env:Path = "$bunPath;$userPath;$machinePath"
+
+        # Re-test bun command (forteaza re-cache)
+        Get-Command bun -ErrorAction SilentlyContinue | Out-Null
+
+        if (Test-Path "$bunPath\bun.exe") {
+            $bunVer = (& "$bunPath\bun.exe" --version 2>&1).Trim()
+            Write-OK "Bun $bunVer instalat"
         } else {
-            Write-Warn "Bun instalat dar NU detectat in PATH"
-            Write-Info "INCHIDE PowerShell, redeschide ca Admin si ruleaza din nou."
-            Wait-User
-            exit 0
+            Write-Err "Bun NU a fost instalat (binary lipsa la $bunPath\bun.exe)"
+            Write-Info "Workaround manual: ruleaza in alt PowerShell:"
+            Write-Info "  irm bun.sh/install.ps1 | iex"
+            Write-Info "Apoi INCHIDE TOATE ferestrele PowerShell, redeschide ca Admin si re-ruleaza installer-ul Genesyum."
+            throw "Bun install incomplet"
         }
     } catch {
         Write-Err "Eroare la install Bun: $_"
-        exit 1
+        Write-Info "Pentru workaround manual, vezi mesajul de mai sus."
+        throw
     }
 }
 
