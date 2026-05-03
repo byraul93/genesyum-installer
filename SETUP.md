@@ -292,7 +292,7 @@ Path:
 2. If yes, leave it alone — DO NOT overwrite student progress.
 3. If no:
    - Create the directory: PowerShell `New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.genesyum"` or Bash `mkdir -p ~/.genesyum`
-   - Use `Write` to create the file with content `{"schema_version":"2.0.0","student_id":null}` (UTF-8 no BOM).
+   - Use `Write` to create the file with content `{"schema_version":"2.0.0","student_id":null,"student_name":null}` (UTF-8 no BOM).
 
 Update (only if created): "✅ State Genesyum inițializat."
 
