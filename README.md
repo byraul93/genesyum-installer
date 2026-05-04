@@ -4,51 +4,35 @@ Mentor AI dropshipping Shopify + Google Shopping pentru piețele UK, US, CA, AU,
 
 ---
 
-## Cum pornești
+## 🎯 Setup în 20 minute — ghid complet vizual
 
-### 1. Trimite-mi username-ul tău GitHub
+**[👉 Deschide ghidul interactiv pas cu pas](https://byraul93.github.io/genesyum-installer/welcome.html)**
 
-Pe email la `support@genesyum.com` sau pe Telegram, scrie-ne:
+(sau dacă preferi raw: [welcome.html în repo](welcome.html))
 
-> Username GitHub: **`username_meu`**
+Ghidul te ține de mână de la zero — chiar dacă n-ai mai folosit Claude, GitHub, Telegram sau plugins. 8 pași cu screenshots, checklist progress, copy-paste comenzi, troubleshooting.
 
-Primești pe email un link de invitație de la GitHub.
+---
 
-### 2. Acceptă invitația
+## TL;DR — pentru cei grăbiți
 
-Click pe link-ul din email **SAU** mergi la https://github.com/byraul93/genesyum-plugins/invitations și click **Accept invitation**.
-
-### 3. Loghează-te cu GitHub pe laptop
-
-Alege **una** dintre opțiuni:
-
-- **GitHub Desktop** (recomandat, cea mai simplă): descarcă https://desktop.github.com → Sign in
-- **VS Code**: deschide VS Code → click pe iconul de cont (stânga jos) → "Sign in with GitHub"
-
-### 4. Deschide Claude și copiază mesajul
-
-Deschide **Claude Desktop** sau **VS Code** și paste exact:
-
-```
-Te rog citește https://raw.githubusercontent.com/byraul93/genesyum-installer/main/SETUP.md și execută toți pașii pentru mine.
-```
-
-Claude se ocupă de tot. Durată: 5-10 minute.
-
-### 5. Restart Claude
-
-Când Claude îți spune ✅ **Setup Genesyum complet!**:
-
-1. Închide Claude
-2. Redeschide
-3. Scrie: `/genesyum-core:start`
-4. **GenyAR** (mentorul tău AI) preia de aici
+1. **Cont GitHub** + trimite username la `support@genesyum.com` → primești invitație repo
+2. **Accept invitație** GitHub
+3. Deschide **Claude Desktop → tab Code → New session**
+4. Paste:
+   ```
+   Te rog citește https://raw.githubusercontent.com/byraul93/genesyum-installer/main/SETUP.md și execută toți pașii pentru mine.
+   ```
+5. Claude instalează automat: Git, Node, Bun, GitHub CLI, Shopify CLI, 8 plugins, configurare
+6. (opțional) Setup bot Telegram — Claude te ghidează prin BotFather
+7. Restart Claude
+8. Scrie `/genesyum-core:start` → **GenyAR** preia de aici
 
 ---
 
 ## Suport
 
 - Email: `support@genesyum.com`
-- Probleme cu access GitHub: trimite username-ul la support
+- Probleme cu access GitHub: trimite username-ul + descrierea problemei
 
 © 2026 Raul Paclisan / Genesyum — uz exclusiv studenți activi.

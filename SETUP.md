@@ -144,6 +144,22 @@ Update: "✅ Bun instalat."
 
 ---
 
+## Step 2.5 — Install Shopify CLI (execute yourself)
+
+Needed for stage 4 (`/magazin-nou`). Install now to avoid friction later.
+
+Run `shopify version` (or `shopify --version`).
+
+- If exit 0 → already installed, continue.
+- If missing → install via npm: `npm install -g @shopify/cli@latest`
+  - Use the `Invoke-Native` pattern (PowerShell stderr from npm is not error — check `$LASTEXITCODE`)
+  - Refresh PATH after install
+- Re-test. If still missing, log warning but continue (Shopify CLI not critical for stages 1-3).
+
+Update: "✅ Shopify CLI instalat (pentru stage 4 magazin)."
+
+---
+
 ## Step 3 — Add the Genesyum marketplace (execute yourself)
 
 Run: `claude plugin marketplace add byraul93/genesyum-plugins`

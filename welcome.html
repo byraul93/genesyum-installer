@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genesyum — Setup în 20 minute</title>
+<style>
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(180deg, #0A0F1F 0%, #0F172A 50%, #1E293B 100%);
+    color: #E2E8F0;
+    line-height: 1.65;
+    min-height: 100vh;
+    padding: 16px;
+}
+
+.container { max-width: 820px; margin: 0 auto; }
+
+/* === HEADER === */
+.hero {
+    background: linear-gradient(135deg, rgba(30,64,175,0.4) 0%, rgba(15,23,42,0.7) 100%);
+    border: 1px solid rgba(56,189,248,0.3);
+    border-radius: 16px;
+    padding: 32px 24px;
+    margin-bottom: 24px;
+    text-align: center;
+}
+.hero .logo {
+    display: inline-block;
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, #0F172A, #1E40AF);
+    border-radius: 14px;
+    border: 2px solid #38BDF8;
+    line-height: 60px;
+    font-size: 36px;
+    font-weight: 800;
+    color: #F8FAFC;
+    margin-bottom: 16px;
+}
+.hero h1 { font-size: 28px; color: #F8FAFC; margin-bottom: 8px; }
+.hero .subtitle { font-size: 15px; color: #94A3B8; margin-bottom: 20px; }
+.hero .meta {
+    display: inline-flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    font-size: 13px;
+    color: #CBD5E1;
+}
+.hero .meta span { padding: 4px 12px; background: rgba(56,189,248,0.1); border-radius: 12px; border: 1px solid rgba(56,189,248,0.2); }
+
+/* === PROGRESS BAR === */
+.phases {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 32px;
+    overflow-x: auto;
+    padding: 8px 4px;
+}
+.phase-pill {
+    flex: 1;
+    min-width: 100px;
+    text-align: center;
+    padding: 10px 6px;
+    background: rgba(15,23,42,0.6);
+    border: 1px solid rgba(148,163,184,0.2);
+    border-radius: 10px;
+    font-size: 11px;
+    color: #94A3B8;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+.phase-pill:hover { border-color: #38BDF8; color: #E2E8F0; }
+.phase-pill.done { background: rgba(34,197,94,0.15); border-color: #22C55E; color: #86EFAC; }
+.phase-pill .num { display: block; font-size: 18px; font-weight: 700; color: #38BDF8; margin-bottom: 2px; }
+.phase-pill.done .num { color: #22C55E; }
+
+/* === SECTIONS === */
+section {
+    background: rgba(15,23,42,0.55);
+    border: 1px solid rgba(56,189,248,0.15);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 20px;
+    scroll-margin-top: 16px;
+}
+section.done { border-left: 4px solid #22C55E; }
+
+section h2 {
+    font-size: 22px;
+    color: #38BDF8;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+section h2 .num {
+    background: linear-gradient(135deg, #38BDF8, #1E40AF);
+    color: white;
+    width: 38px; height: 38px; line-height: 38px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+section .duration { font-size: 12px; color: #94A3B8; margin-bottom: 16px; padding-left: 50px; }
+section h3 { font-size: 16px; color: #E2E8F0; margin: 20px 0 8px; }
+section p { margin-bottom: 12px; color: #CBD5E1; }
+section ul, section ol { margin: 8px 0 12px 24px; }
+section li { margin-bottom: 8px; color: #CBD5E1; }
+section li strong { color: #F8FAFC; }
+
+/* === COPY BLOCKS === */
+.copy-block {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(56,189,248,0.3);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 12px 0;
+    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    color: #FCD34D;
+    position: relative;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.copy-block:hover { background: rgba(0,0,0,0.55); border-color: #38BDF8; }
+.copy-block::after {
+    content: '📋 Click pentru a copia';
+    display: block;
+    margin-top: 10px;
+    font-size: 11px;
+    color: #64748B;
+    font-family: inherit;
+}
+.copy-block.copied::after { content: '✅ Copiat!'; color: #86EFAC; }
+
+/* === BOXES === */
+.box {
+    border-left: 4px solid;
+    padding: 14px 18px;
+    border-radius: 8px;
+    margin: 14px 0;
+}
+.box-info { background: rgba(56,189,248,0.08); border-color: #38BDF8; }
+.box-success { background: rgba(34,197,94,0.08); border-color: #22C55E; }
+.box-warning { background: rgba(245,158,11,0.08); border-color: #F59E0B; }
+.box-danger { background: rgba(239,68,68,0.08); border-color: #EF4444; }
+.box strong { display: block; color: #F8FAFC; margin-bottom: 4px; }
+
+/* === MOCK SCREENSHOTS (SVG) === */
+.mock {
+    background: #1E293B;
+    border: 1px solid rgba(148,163,184,0.3);
+    border-radius: 12px;
+    padding: 12px;
+    margin: 16px 0;
+    overflow-x: auto;
+}
+.mock-caption { font-size: 11px; color: #94A3B8; text-align: center; margin-top: 8px; font-style: italic; }
+
+/* === BUTTONS / CTA === */
+.cta {
+    display: inline-block;
+    background: linear-gradient(135deg, #38BDF8 0%, #1E40AF 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    margin: 12px 0;
+    transition: transform 0.2s;
+}
+.cta:hover { transform: translateY(-2px); }
+.cta-link {
+    color: #38BDF8;
+    text-decoration: none;
+    border-bottom: 1px dashed #38BDF8;
+}
+.cta-link:hover { color: #7DD3FC; }
+
+/* === CHECKLIST === */
+.checklist {
+    list-style: none !important;
+    margin: 0 !important;
+}
+.checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(15,23,42,0.4);
+    border: 1px solid rgba(148,163,184,0.15);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.checklist li:hover { border-color: #38BDF8; }
+.checklist li.checked {
+    background: rgba(34,197,94,0.1);
+    border-color: #22C55E;
+    color: #94A3B8;
+}
+.checklist li.checked .text { text-decoration: line-through; }
+.checklist li::before {
+    content: '';
+    display: inline-block;
+    width: 22px; height: 22px;
+    border: 2px solid #475569;
+    border-radius: 6px;
+    flex-shrink: 0;
+    background-color: transparent;
+    margin-top: 1px;
+    transition: all 0.2s;
+}
+.checklist li.checked::before {
+    background: #22C55E;
+    border-color: #22C55E;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+    background-size: 16px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* === TIMELINE === */
+.timeline {
+    border-left: 2px solid rgba(56,189,248,0.3);
+    margin: 16px 0 16px 16px;
+    padding-left: 24px;
+}
+.timeline-item {
+    margin-bottom: 16px;
+    position: relative;
+}
+.timeline-item::before {
+    content: '';
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #38BDF8;
+    position: absolute;
+    left: -32px;
+    top: 4px;
+    box-shadow: 0 0 0 4px rgba(56,189,248,0.15);
+}
+.timeline-item .label {
+    font-size: 11px;
+    color: #94A3B8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.timeline-item .title { font-size: 14px; color: #F8FAFC; font-weight: 600; }
+.timeline-item .desc { font-size: 13px; color: #CBD5E1; margin-top: 2px; }
+
+/* === TROUBLESHOOTING === */
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+th { background: rgba(56,189,248,0.1); color: #F8FAFC; padding: 10px 8px; text-align: left; font-weight: 600; border-bottom: 1px solid rgba(56,189,248,0.3); }
+td { padding: 10px 8px; border-bottom: 1px solid rgba(148,163,184,0.15); color: #CBD5E1; vertical-align: top; }
+tr:hover td { background: rgba(56,189,248,0.04); }
+
+/* === FOOTER === */
+footer {
+    text-align: center;
+    color: #64748B;
+    font-size: 12px;
+    margin-top: 32px;
+    padding: 20px;
+    border-top: 1px solid rgba(148,163,184,0.1);
+}
+footer a { color: #38BDF8; text-decoration: none; }
+
+/* === MOBILE === */
+@media (max-width: 600px) {
+    body { padding: 8px; }
+    .hero { padding: 24px 16px; }
+    .hero h1 { font-size: 22px; }
+    section { padding: 18px; }
+    section h2 { font-size: 18px; }
+    .phase-pill { min-width: 70px; font-size: 10px; padding: 8px 4px; }
+    .phase-pill .num { font-size: 14px; }
+    .copy-block { font-size: 12px; padding: 10px 12px; }
+}
+
+/* === KEY VISUAL: PASTE MESSAGE STYLE === */
+.magic-message {
+    background: linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(15,23,42,0.7) 100%);
+    border: 2px solid #22C55E;
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin: 18px 0;
+    font-family: 'SF Mono', 'Consolas', monospace;
+    font-size: 14px;
+    color: #F0FDF4;
+    cursor: pointer;
+    position: relative;
+}
+.magic-message::after {
+    content: '👆 Click pentru copy — apoi paste în Claude Desktop, tab Code';
+    display: block;
+    margin-top: 12px;
+    font-size: 11px;
+    color: #86EFAC;
+    font-family: -apple-system, sans-serif;
+    text-align: center;
+}
+.magic-message.copied::after { content: '✅ Copiat! Acum paste în Claude Desktop → tab Code → New session'; }
+
+/* === PROGRESS INDICATOR === */
+.progress-indicator {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    background: rgba(15,23,42,0.9);
+    border: 1px solid #38BDF8;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #38BDF8;
+    backdrop-filter: blur(8px);
+    z-index: 100;
+}
+.progress-indicator .count { color: #22C55E; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HERO -->
+<div class="hero">
+    <div class="logo">G</div>
+    <h1>Bun venit la Genesyum</h1>
+    <div class="subtitle">Setup complet în ~20 minute. Tot ce ai nevoie e Claude Desktop instalat — restul facem împreună.</div>
+    <div class="meta">
+        <span>⏱️ 20 min</span>
+        <span>🎯 8 pași</span>
+        <span>🤖 Claude face toată instalarea</span>
+        <span>📱 Telegram opțional</span>
+    </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="phases">
+    <a class="phase-pill" href="#pas-1" data-phase="1"><span class="num">1</span>Cont GitHub</a>
+    <a class="phase-pill" href="#pas-2" data-phase="2"><span class="num">2</span>Invitație</a>
+    <a class="phase-pill" href="#pas-3" data-phase="3"><span class="num">3</span>Mesaj magic</a>
+    <a class="phase-pill" href="#pas-4" data-phase="4"><span class="num">4</span>Permisiuni</a>
+    <a class="phase-pill" href="#pas-5" data-phase="5"><span class="num">5</span>Telegram</a>
+    <a class="phase-pill" href="#pas-6" data-phase="6"><span class="num">6</span>Restart</a>
+    <a class="phase-pill" href="#pas-7" data-phase="7"><span class="num">7</span>Pairing</a>
+    <a class="phase-pill" href="#pas-8" data-phase="8"><span class="num">8</span>Start</a>
+</div>
+
+<!-- PRE-CHECK -->
+<section id="pre-check">
+    <h2><span class="num">0</span>Înainte să începem</h2>
+    <div class="duration">~30 secunde</div>
+
+    <p>Asigură-te că ai <strong>Claude Desktop</strong> instalat și deschis.</p>
+
+    <ul class="checklist" data-list="precheck">
+        <li><span class="text">Am Claude Desktop instalat (dacă nu, descarcă de la <a class="cta-link" href="https://claude.ai/download" target="_blank">claude.ai/download</a>)</span></li>
+        <li><span class="text">Sunt logat în Claude Desktop cu contul meu Anthropic</span></li>
+        <li><span class="text">Am o conexiune internet stabilă</span></li>
+    </ul>
+
+    <div class="box box-info">
+        <strong>De ce doar Claude Desktop?</strong>
+        Claude Code e integrat direct în Claude Desktop (tab-ul "Code"). Nu trebuie să instalezi nimic separat — Claude se ocupă de Git, Node.js, plugins, totul.
+    </div>
+</section>
+
+<!-- PAS 1: CONT GITHUB -->
+<section id="pas-1">
+    <h2><span class="num">1</span>Cont GitHub (dacă n-ai deja)</h2>
+    <div class="duration">~2 minute</div>
+
+    <p>GitHub e platforma unde sunt găzduite plugins-urile Genesyum. Ai nevoie de un cont gratuit + să fii invitat la repo-ul nostru privat.</p>
+
+    <h3>Dacă deja ai cont GitHub</h3>
+    <p>Sări la <a class="cta-link" href="#pas-2">pasul 2</a> și trimite-ne username-ul.</p>
+
+    <h3>Dacă NU ai cont GitHub</h3>
+    <ol>
+        <li>Deschide <a class="cta-link" href="https://github.com/signup" target="_blank">github.com/signup</a></li>
+        <li>Introdu un email valid (orice — Gmail, Yahoo, etc.)</li>
+        <li>Alege o parolă puternică</li>
+        <li>Alege un username scurt (ex: <code>maria_bucuresti</code>) — îl vei folosi des</li>
+        <li>Verifică emailul (cod de 8 cifre)</li>
+        <li>Skip pașii opționali (interese, plan paid, etc.) — selectează "Free"</li>
+    </ol>
+
+    <h3>Trimite username-ul la Genesyum</h3>
+    <p>După ce ai cont, copiază mesajul de mai jos, înlocuiește <code>username_meu</code> cu username-ul tău GitHub real, și trimite-l la <strong>support@genesyum.com</strong> sau pe Telegram către admin:</p>
+
+    <div class="copy-block" data-copy="genesyum-invite">Salut Genesyum,
+
+Am cont GitHub creat. Username-ul meu: username_meu
+
+Aștept invitația la repo-ul de plugins.
+
+Mulțumesc.</div>
+
+    <div class="box box-warning">
+        <strong>⏱️ Răspuns admin: max 24h</strong>
+        Ne rezervăm dreptul de a verifica că ești student activ înainte de a aproba accesul. Dacă ești înrolat în programul Genesyum, primești invitația în câteva ore.
+    </div>
+
+    <ul class="checklist" data-list="github">
+        <li><span class="text">Am cont GitHub</span></li>
+        <li><span class="text">Am trimis username-ul la support@genesyum.com</span></li>
+    </ul>
+</section>
+
+<!-- PAS 2: INVITAȚIE -->
+<section id="pas-2">
+    <h2><span class="num">2</span>Acceptă invitația GitHub</h2>
+    <div class="duration">~1 minut (după ce admin te-a invitat)</div>
+
+    <p>După ce admin Genesyum te invită, primești email de la GitHub cu subject <em>"byraul93 invited you to byraul93/genesyum-plugins"</em>.</p>
+
+    <h3>Două căi să accepți:</h3>
+
+    <h3>Opțiunea A — Click pe email</h3>
+    <ol>
+        <li>Deschide email-ul de la GitHub în inbox</li>
+        <li>Click <strong>"View invitation"</strong></li>
+        <li>Pe pagina GitHub, click <strong>"Accept invitation"</strong></li>
+    </ol>
+
+    <h3>Opțiunea B — Direct prin browser</h3>
+    <ol>
+        <li>Loghează-te la <a class="cta-link" href="https://github.com/login" target="_blank">github.com/login</a></li>
+        <li>Mergi la <a class="cta-link" href="https://github.com/byraul93/genesyum-plugins/invitations" target="_blank">github.com/byraul93/genesyum-plugins/invitations</a></li>
+        <li>Click <strong>"Accept invitation"</strong></li>
+    </ol>
+
+    <!-- MOCK SCREENSHOT INVITATION -->
+    <div class="mock">
+        <svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:600px; display:block; margin:0 auto;">
+            <rect width="600" height="220" fill="#0d1117" rx="6"/>
+            <rect x="12" y="12" width="576" height="44" fill="#161b22" rx="4"/>
+            <circle cx="34" cy="34" r="11" fill="#22C55E"/>
+            <text x="56" y="40" fill="#F8FAFC" font-family="-apple-system,sans-serif" font-size="14" font-weight="600">byraul93/genesyum-plugins</text>
+            <text x="56" y="56" fill="#94A3B8" font-family="-apple-system,sans-serif" font-size="11">Private repository · Invited by byraul93</text>
+            <rect x="20" y="80" width="560" height="50" fill="#1f6feb20" rx="4" stroke="#1f6feb" stroke-width="1"/>
+            <text x="36" y="106" fill="#7DD3FC" font-family="-apple-system,sans-serif" font-size="13">📨 byraul93 has invited you to collaborate on this repository</text>
+            <text x="36" y="124" fill="#94A3B8" font-family="-apple-system,sans-serif" font-size="11">You'll have Read access to view code and pull updates.</text>
+            <rect x="20" y="150" width="180" height="38" fill="#22863a" rx="6"/>
+            <text x="60" y="174" fill="#fff" font-family="-apple-system,sans-serif" font-size="14" font-weight="600">✓ Accept invitation</text>
+            <rect x="210" y="150" width="120" height="38" fill="transparent" stroke="#30363d" stroke-width="1" rx="6"/>
+            <text x="240" y="174" fill="#94A3B8" font-family="-apple-system,sans-serif" font-size="13">Decline</text>
+        </svg>
+        <div class="mock-caption">Așa arată pagina de invitație pe GitHub.com — click pe butonul verde "Accept invitation"</div>
+    </div>
+
+    <div class="box box-success">
+        <strong>✅ Ce confirmă că invitația a fost acceptată</strong>
+        Pagina te redirecționează la repo-ul <code>byraul93/genesyum-plugins</code> și vezi conținutul. Dacă vezi 404 → invitația n-a fost acceptată corect.
+    </div>
+
+    <ul class="checklist" data-list="invitation">
+        <li><span class="text">Am acceptat invitația GitHub</span></li>
+        <li><span class="text">Pot vedea repo-ul byraul93/genesyum-plugins în browser</span></li>
+    </ul>
+</section>
+
+<!-- PAS 3: MESAJ MAGIC -->
+<section id="pas-3">
+    <h2><span class="num">3</span>Lansează Claude Code și paste mesajul magic</h2>
+    <div class="duration">~30 secunde</div>
+
+    <p>Acum trecem totul la Claude. Studentul nu mai face nimic manual — Claude se ocupă de instalări, configurări, plugins.</p>
+
+    <h3>Pasul A — Deschide tab-ul "Code" în Claude Desktop</h3>
+
+    <!-- MOCK CLAUDE DESKTOP -->
+    <div class="mock">
+        <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:700px; display:block; margin:0 auto;">
+            <rect width="700" height="200" fill="#0F172A" rx="8"/>
+            <!-- Sidebar -->
+            <rect x="0" y="0" width="220" height="200" fill="#0A0F1F"/>
+            <!-- Tab bar -->
+            <rect x="20" y="20" width="180" height="40" fill="#1E293B" rx="20"/>
+            <rect x="30" y="28" width="50" height="24" fill="transparent" rx="14"/>
+            <text x="42" y="44" fill="#94A3B8" font-family="-apple-system,sans-serif" font-size="11">Chat</text>
+            <rect x="85" y="28" width="55" height="24" fill="transparent" rx="14"/>
+            <text x="92" y="44" fill="#94A3B8" font-family="-apple-system,sans-serif" font-size="11">Cowork</text>
+            <rect x="145" y="28" width="50" height="24" fill="#475569" rx="14"/>
+            <text x="158" y="44" fill="#fff" font-family="-apple-system,sans-serif" font-size="11" font-weight="600">Code</text>
+            <!-- Arrow pointing at Code tab -->
+            <path d="M 195 28 Q 240 8 280 8" stroke="#FCD34D" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+            <defs>
+                <marker id="arrow" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto" markerUnits="strokeWidth">
+                    <path d="M0,0 L0,6 L9,3 z" fill="#FCD34D"/>
+                </marker>
+            </defs>
+            <text x="290" y="14" fill="#FCD34D" font-family="-apple-system,sans-serif" font-size="13" font-weight="600">👈 Click aici</text>
+            <!-- New session button -->
+            <text x="32" y="92" fill="#F8FAFC" font-family="-apple-system,sans-serif" font-size="12">+ New session</text>
+            <!-- Recents -->
+            <text x="32" y="120" fill="#64748B" font-family="-apple-system,sans-serif" font-size="10" font-weight="600">RECENTS</text>
+            <text x="32" y="140" fill="#94A3B8" font-family="-apple-system,sans-serif" font-size="11">○ Genesyum setup</text>
+            <!-- Main area -->
+            <text x="280" y="100" fill="#F8FAFC" font-family="-apple-system,sans-serif" font-size="18" font-weight="600">✶ What's up next, Maria?</text>
+            <rect x="280" y="130" width="380" height="50" fill="#1E293B" rx="8" stroke="#475569"/>
+            <text x="296" y="158" fill="#94A3B8" font-family="-apple-system,sans-serif" font-size="13">Type your message here...</text>
+        </svg>
+        <div class="mock-caption">În Claude Desktop, click pe tab-ul "Code" sus, apoi "+ New session"</div>
+    </div>
+
+    <h3>Pasul B — Paste mesajul magic</h3>
+    <p>Click pe blocul verde de mai jos pentru a copia, apoi paste în câmpul de chat din Claude Desktop:</p>
+
+    <div class="magic-message" data-copy="magic-message">Te rog citește https://raw.githubusercontent.com/byraul93/genesyum-installer/main/SETUP.md și execută toți pașii pentru mine.</div>
+
+    <h3>Pasul C — Apasă Enter</h3>
+    <p>Claude va citi instrucțiunile și începe să instaleze automat tot ce e nevoie. Tu doar urmărești.</p>
+
+    <ul class="checklist" data-list="magic">
+        <li><span class="text">Am deschis tab-ul Code în Claude Desktop</span></li>
+        <li><span class="text">Am click pe "+ New session"</span></li>
+        <li><span class="text">Am copy mesajul magic și paste în chat</span></li>
+        <li><span class="text">Am apăsat Enter</span></li>
+    </ul>
+</section>
+
+<!-- PAS 4: PERMISIUNI -->
+<section id="pas-4">
+    <h2><span class="num">4</span>Permisiuni Claude — un singur click important</h2>
+    <div class="duration">~10 secunde</div>
+
+    <p>După mesajul magic, Claude începe să ruleze comenzi pe calculatorul tău (instalează apps, scrie fișiere, etc.). Pentru fiecare comandă nouă, Claude Desktop îți arată un popup de aprobare.</p>
+
+    <!-- MOCK PERMISSION POPUP -->
+    <div class="mock">
+        <svg viewBox="0 0 560 240" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:560px; display:block; margin:0 auto;">
+            <rect width="560" height="240" fill="#0F172A" rx="8"/>
+            <!-- Popup -->
+            <rect x="80" y="40" width="400" height="180" fill="#1E293B" rx="12" stroke="#38BDF8" stroke-width="1.5"/>
+            <text x="100" y="68" fill="#FCD34D" font-family="-apple-system,sans-serif" font-size="16" font-weight="700">🔐 Permission required</text>
+            <text x="100" y="92" fill="#CBD5E1" font-family="-apple-system,sans-serif" font-size="12">Claude wants to run:</text>
+            <rect x="100" y="100" width="360" height="32" fill="#0F172A" rx="4"/>
+            <text x="112" y="120" fill="#86EFAC" font-family="monospace" font-size="11">winget install --id Git.Git -e --silent</text>
+            <!-- Buttons -->
+            <rect x="100" y="150" width="140" height="42" fill="#22C55E" rx="6"/>
+            <text x="120" y="176" fill="white" font-family="-apple-system,sans-serif" font-size="13" font-weight="700">✓ Allow for this</text>
+            <text x="138" y="190" fill="white" font-family="-apple-system,sans-serif" font-size="11">conversation</text>
+            <rect x="250" y="150" width="100" height="42" fill="transparent" stroke="#475569" rx="6"/>
+            <text x="278" y="176" fill="#94A3B8" font-family="-apple-system,sans-serif" font-size="13">Allow once</text>
+            <rect x="360" y="150" width="100" height="42" fill="transparent" stroke="#475569" rx="6"/>
+            <text x="395" y="176" fill="#94A3B8" font-family="-apple-system,sans-serif" font-size="13">Deny</text>
+            <!-- Big arrow pointing at green button -->
+            <path d="M 50 170 Q 80 170 95 170" stroke="#FCD34D" stroke-width="3" fill="none" marker-end="url(#arrow2)"/>
+            <defs>
+                <marker id="arrow2" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L9,3 z" fill="#FCD34D"/>
+                </marker>
+            </defs>
+            <text x="10" y="140" fill="#FCD34D" font-family="-apple-system,sans-serif" font-size="11" font-weight="700">CLICK</text>
+            <text x="10" y="155" fill="#FCD34D" font-family="-apple-system,sans-serif" font-size="11" font-weight="700">AICI</text>
+        </svg>
+        <div class="mock-caption">La PRIMUL popup, click "Allow for this conversation" — așa nu mai apare la fiecare comandă</div>
+    </div>
+
+    <div class="box box-success">
+        <strong>✅ Regulă de aur</strong>
+        La primul popup permission, click <strong>"Allow for this conversation"</strong> (NU "Allow once"). Așa Claude rulează fluent setup-ul fără să te întrebe la fiecare 5 secunde.
+    </div>
+
+    <div class="box box-warning">
+        <strong>⚠️ Apare browser pentru GitHub login</strong>
+        La un moment dat, Claude va deschide un tab de browser pentru autentificare GitHub (via GitHub CLI). Vei vedea un cod de 8 caractere în Claude — copiază-l și paste-uiește-l în tab-ul de browser care s-a deschis. Asta cache-uiește credentialele git pentru tot setup-ul.
+    </div>
+
+    <h3>Ce instalează Claude automat</h3>
+    <div class="timeline">
+        <div class="timeline-item">
+            <div class="label">Pas 1/8</div>
+            <div class="title">Git for Windows</div>
+            <div class="desc">Necesar pentru a descărca plugins din GitHub. ~30 sec.</div>
+        </div>
+        <div class="timeline-item">
+            <div class="label">Pas 2/8</div>
+            <div class="title">Node.js LTS</div>
+            <div class="desc">Runtime pentru hooks și Shopify CLI. ~1 min.</div>
+        </div>
+        <div class="timeline-item">
+            <div class="label">Pas 3/8</div>
+            <div class="title">GitHub CLI + auth browser</div>
+            <div class="desc">Cache-uiește credentialele tale GitHub. Aici primești codul de 8 caractere de paste-uit în browser.</div>
+        </div>
+        <div class="timeline-item">
+            <div class="label">Pas 4/8</div>
+            <div class="title">Bun runtime</div>
+            <div class="desc">Pentru bot Telegram (dacă alegi să-l folosești). ~30 sec.</div>
+        </div>
+        <div class="timeline-item">
+            <div class="label">Pas 5/8</div>
+            <div class="title">Shopify CLI</div>
+            <div class="desc">Pentru construirea magazinului la stage 4. ~1 min.</div>
+        </div>
+        <div class="timeline-item">
+            <div class="label">Pas 6/8</div>
+            <div class="title">Marketplace Genesyum + 8 plugins</div>
+            <div class="desc">3 plugins Genesyum (core, nisa, build-ops) + 5 dependențe (telegram, shopify-ai-toolkit, playwright, frontend-design, context7). ~2 min.</div>
+        </div>
+        <div class="timeline-item">
+            <div class="label">Pas 7/8</div>
+            <div class="title">Configurare settings.json</div>
+            <div class="desc">Backup automat la setări existente, apoi merge cu cele Genesyum. ~5 sec.</div>
+        </div>
+        <div class="timeline-item">
+            <div class="label">Pas 8/8</div>
+            <div class="title">Inițializare progres tău</div>
+            <div class="desc">Creează ~/.genesyum/state.json — aici se salvează unde ai rămas, alegerile tale, etc. ~1 sec.</div>
+        </div>
+    </div>
+
+    <ul class="checklist" data-list="permissions">
+        <li><span class="text">Am dat click "Allow for this conversation" la primul popup</span></li>
+        <li><span class="text">Am completat autentificarea GitHub în browser</span></li>
+        <li><span class="text">Văd Claude executând cele 8 instalări</span></li>
+    </ul>
+</section>
+
+<!-- PAS 5: TELEGRAM -->
+<section id="pas-5">
+    <h2><span class="num">5</span>Telegram bot — opțional dar recomandat</h2>
+    <div class="duration">~5 minute (dacă alegi DA)</div>
+
+    <p>Cu Telegram, vei putea vorbi cu GenyAR de pe telefon — exact ca cu un prieten. Bot-ul rulează pe PC-ul tău, dar mesajele primesc/trimite prin Telegram.</p>
+
+    <p>Claude te va întreba: <em>"Vrei să folosești Telegram ca să-mi vorbești de pe telefon? (Y/n)"</em></p>
+
+    <ul>
+        <li><strong>Spune NU</strong> dacă vrei să rămâi doar pe PC (Claude Desktop). Sări la <a class="cta-link" href="#pas-6">pasul 6</a>.</li>
+        <li><strong>Spune Y</strong> și continuă mai jos.</li>
+    </ul>
+
+    <h3>5.1 — Instalează Telegram pe phone (dacă nu ai deja)</h3>
+    <ul>
+        <li><strong>iPhone:</strong> App Store → caută "Telegram" → Install</li>
+        <li><strong>Android:</strong> Google Play → "Telegram" → Install</li>
+    </ul>
+
+    <h3>5.2 — Vorbește cu @BotFather pe Telegram</h3>
+    <p>BotFather e bot-ul oficial Telegram pentru a crea bot-uri noi. Așa creezi GenyAR-ul tău personal.</p>
+
+    <ol>
+        <li>Pe phone, deschide Telegram</li>
+        <li>În bara de search, tastează: <code>@BotFather</code> (cu @ în față, oficial verificat cu bifă albastră)</li>
+        <li>Click pe BotFather → <strong>Start</strong> (sau scrie <code>/start</code>)</li>
+        <li>Trimite comanda: <code>/newbot</code></li>
+        <li>BotFather îți răspunde: <em>"Alright, a new bot. How are we going to call it?"</em></li>
+        <li>Trimite EXACT acest text (numele afișat în Telegram):
+            <div class="copy-block" data-copy="bot-name">GenyAR</div>
+        </li>
+        <li>BotFather îți răspunde: <em>"Good. Now let's choose a username for your bot..."</em></li>
+        <li>Trimite un username personal terminat în <code>bot</code>. Exemple:
+            <ul>
+                <li><code>genyar_paul_bot</code></li>
+                <li><code>genyar_maria_bot</code></li>
+                <li><code>genyar_andrei2026_bot</code></li>
+            </ul>
+            Dacă username-ul e luat, încearcă cu o cifră sau alt nume.
+        </li>
+        <li>BotFather îți răspunde cu un mesaj care conține TOKEN-ul. Format: <code>123456789:AAH...XYZ</code> (~46 caractere).</li>
+        <li>Copiază token-ul (long-press pe el pe phone → Copy).</li>
+    </ol>
+
+    <div class="box box-warning">
+        <strong>⚠️ Important — numele bot-ului EXACT "GenyAR"</strong>
+        Toți studenții Genesyum au același nume afișat. Asta îți permite să recunoști imediat bot-ul în lista de chat-uri Telegram. Doar username-ul (genyar_xxx_bot) e personal unic.
+    </div>
+
+    <h3>5.3 — Paste token-ul în Claude</h3>
+    <p>Întoarce-te la Claude Desktop, paste token-ul când ți-l cere. Claude îl salvează automat.</p>
+
+    <div class="box box-danger">
+        <strong>🔒 Token = cheie privată</strong>
+        NU paste-ui token-ul în alte chat-uri publice, email, sau pe rețele sociale. Cine îl are poate controla bot-ul. Doar la Claude.
+    </div>
+
+    <ul class="checklist" data-list="telegram">
+        <li><span class="text">Am instalat Telegram pe phone</span></li>
+        <li><span class="text">Am vorbit cu @BotFather</span></li>
+        <li><span class="text">Numele bot: GenyAR (exact)</span></li>
+        <li><span class="text">Username: ales personal (genyar_xxx_bot)</span></li>
+        <li><span class="text">Am paste token-ul la Claude</span></li>
+    </ul>
+</section>
+
+<!-- PAS 6: RESTART -->
+<section id="pas-6">
+    <h2><span class="num">6</span>Restart Claude Desktop</h2>
+    <div class="duration">~30 secunde</div>
+
+    <p>Când Claude îți spune <strong>"✅ Setup Genesyum complet!"</strong>, e timpul să restartezi Claude Desktop. Asta activează plugins-urile.</p>
+
+    <ol>
+        <li>Click <strong>X</strong> pe fereastra Claude Desktop (sau File → Quit)</li>
+        <li>Așteaptă 5 secunde</li>
+        <li>Redeschide Claude Desktop (din Start menu sau Desktop shortcut)</li>
+        <li>Click pe tab-ul <strong>Code</strong> → <strong>+ New session</strong></li>
+    </ol>
+
+    <div class="box box-info">
+        <strong>De ce restart?</strong>
+        Plugins-urile noi se încarcă doar la pornirea Claude. Fără restart, Claude nu știe că GenyAR și restul plugin-urilor sunt instalate.
+    </div>
+
+    <ul class="checklist" data-list="restart">
+        <li><span class="text">Am închis complet Claude Desktop</span></li>
+        <li><span class="text">Am redeschis Claude Desktop</span></li>
+        <li><span class="text">Am sesiune nouă în tab-ul Code</span></li>
+    </ul>
+</section>
+
+<!-- PAS 7: PAIRING TELEGRAM -->
+<section id="pas-7">
+    <h2><span class="num">7</span>Pairing Telegram — o singură dată</h2>
+    <div class="duration">~2 minute (sări dacă n-ai făcut Telegram)</div>
+
+    <p>Dacă ai configurat Telegram la pasul 5, acum facem legătura între bot-ul tău și PC. Se face <strong>o singură dată</strong> — niciodată repetat.</p>
+
+    <h3>7.1 — Pornește bot-ul prima dată manual</h3>
+    <p>Pe Desktop, vezi o iconiță nouă <strong>Genesyum Bot</strong>. Dublu-click pe ea.</p>
+    <p>Se deschide o fereastră minimizată în taskbar — asta e bot-ul care rulează.</p>
+
+    <div class="box box-info">
+        <strong>De acum încolo</strong>
+        Bot-ul pornește singur la fiecare boot Windows (Claude a configurat asta automat). Click manual e doar pentru sesiunea de azi.
+    </div>
+
+    <h3>7.2 — Pe phone, dă DM bot-ului</h3>
+    <ol>
+        <li>Deschide Telegram pe phone</li>
+        <li>Caută în bara de search username-ul bot-ului tău (ex: <code>@genyar_paul_bot</code>)</li>
+        <li>Click pe bot → <strong>Start</strong></li>
+        <li>Trimite orice mesaj (ex: <em>"salut"</em>)</li>
+        <li>Bot-ul îți răspunde cu un cod de 6 caractere (ex: <code>A4F7K2</code>)</li>
+    </ol>
+
+    <h3>7.3 — Pe PC, paste codul în Claude</h3>
+    <p>Întoarce-te la Claude Desktop (sesiunea nouă din pasul 6) și scrie:</p>
+    <div class="copy-block" data-copy="pair-cmd">/telegram:access pair A4F7K2</div>
+    <p>(Înlocuiește <code>A4F7K2</code> cu codul tău real.)</p>
+
+    <p>Apoi scrie:</p>
+    <div class="copy-block" data-copy="allowlist-cmd">/telegram:access policy allowlist</div>
+
+    <p>Asta blochează bot-ul doar pentru tine — nimeni altcineva nu poate scrie.</p>
+
+    <ul class="checklist" data-list="pairing">
+        <li><span class="text">Am dublu-click pe Genesyum Bot de pe Desktop</span></li>
+        <li><span class="text">Am DM-uit bot-ul de pe phone</span></li>
+        <li><span class="text">Am primit codul 6 caractere</span></li>
+        <li><span class="text">Am scris /telegram:access pair COD în Claude</span></li>
+        <li><span class="text">Am scris /telegram:access policy allowlist</span></li>
+    </ul>
+</section>
+
+<!-- PAS 8: START -->
+<section id="pas-8">
+    <h2><span class="num">8</span>Primul "Salut" cu GenyAR</h2>
+    <div class="duration">~10 secunde</div>
+
+    <p>Setup-ul e gata. Acum începe partea distractivă.</p>
+
+    <h3>În Claude Desktop scrie:</h3>
+    <div class="copy-block" data-copy="start-cmd">/genesyum-core:start</div>
+
+    <p>GenyAR îți va răspunde, te va întreba cum te cheamă (dacă nu ai spus deja), și-ți va explica harta celor 7 etape ale dropshipping-ului.</p>
+
+    <h3>SAU pe Telegram</h3>
+    <p>Trimite orice mesaj bot-ului tău GenyAR. El îți răspunde direct. De acum încolo, ai mentor AI 24/7.</p>
+
+    <div class="box box-success">
+        <strong>🎉 Felicitări — ești student Genesyum activ</strong>
+        Tot ce trebuie să faci de acum înainte: aprinzi PC-ul → bot-ul Telegram pornește singur → scrii pe phone sau Desktop → GenyAR te ghidează prin nișă, brand, magazin, ads, până la primele vânzări.
+    </div>
+
+    <ul class="checklist" data-list="start">
+        <li><span class="text">Am scris /genesyum-core:start</span></li>
+        <li><span class="text">GenyAR mi-a răspuns</span></li>
+        <li><span class="text">Sunt gata să încep dropshipping-ul</span></li>
+    </ul>
+</section>
+
+<!-- TROUBLESHOOTING -->
+<section id="troubleshooting">
+    <h2><span class="num">!</span>Dacă apare ceva ciudat</h2>
+
+    <table>
+        <thead>
+            <tr><th style="width:30%">Simptom</th><th style="width:35%">Cauză probabilă</th><th>Fix</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Claude pare blocat 5+ min la "Adaug marketplace..."</td>
+                <td>Browser GitHub auth nu s-a făcut corect</td>
+                <td>În Claude scrie: "rulează din nou gh auth login --web"</td>
+            </tr>
+            <tr>
+                <td>Windows arată "SmartScreen blocked"</td>
+                <td>Normal pentru apps nesemnate first-time</td>
+                <td>Click "More info" → "Run anyway"</td>
+            </tr>
+            <tr>
+                <td>Bot Telegram nu răspunde după restart</td>
+                <td>Bot-ul nu pornește încă (prima dată după setup)</td>
+                <td>Dublu-click pe iconița "Genesyum Bot" de pe Desktop</td>
+            </tr>
+            <tr>
+                <td>Bot răspunde ca "Claude" generic, nu GenyAR</td>
+                <td>Plugin nu s-a actualizat la ultima versiune</td>
+                <td>În Claude: <code>claude plugin update genesyum-core</code> apoi restart</td>
+            </tr>
+            <tr>
+                <td>Claude întreabă mereu "Allow this command?"</td>
+                <td>Ai dat "Allow once" în loc de "Allow for this conversation"</td>
+                <td>Click "Allow for this conversation" — apare doar prima dată</td>
+            </tr>
+            <tr>
+                <td>Apare "Repository not found"</td>
+                <td>Invitația GitHub n-a fost acceptată</td>
+                <td>Verifică <a class="cta-link" href="https://github.com/byraul93/genesyum-plugins/invitations" target="_blank">github.com/byraul93/genesyum-plugins/invitations</a></td>
+            </tr>
+            <tr>
+                <td>Orice altceva</td>
+                <td>—</td>
+                <td>Email <a class="cta-link" href="mailto:support@genesyum.com">support@genesyum.com</a> cu screenshot și descrie ce ai făcut ultima dată</td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- SUPORT -->
+<section id="suport">
+    <h2><span class="num">?</span>Suport</h2>
+
+    <ul>
+        <li><strong>Email:</strong> <a class="cta-link" href="mailto:support@genesyum.com">support@genesyum.com</a></li>
+        <li><strong>Probleme cu access GitHub:</strong> trimite username-ul + screenshot la support</li>
+        <li><strong>Probleme cu setup-ul:</strong> screenshot din Claude (ce comandă a pică) + descriere</li>
+    </ul>
+
+    <p>Răspuns admin în max 24h pentru studenți activi.</p>
+</section>
+
+<footer>
+    Genesyum AI Mentor · © 2026 Raul Paclisan / Genesyum<br>
+    Uz exclusiv studenți activi · Versiunea ghid: 1.0.0 · 2026-05-04
+</footer>
+
+</div>
+
+<!-- PROGRESS INDICATOR -->
+<div class="progress-indicator" id="progressIndicator">
+    Progres: <span class="count" id="progressCount">0</span>/<span id="progressTotal">0</span>
+</div>
+
+<script>
+// Copy-to-clipboard
+document.querySelectorAll('[data-copy]').forEach(el => {
+    el.addEventListener('click', () => {
+        const text = el.textContent.replace(/👆.*$/, '').replace(/📋.*$/, '').replace(/✅.*$/, '').trim();
+        navigator.clipboard.writeText(text).then(() => {
+            el.classList.add('copied');
+            setTimeout(() => el.classList.remove('copied'), 2500);
+        }).catch(() => alert('Selectează manual și copiază: ' + text));
+    });
+});
+
+// Checklist with localStorage persistence
+const STORAGE_KEY = 'genesyum-setup-progress-v1';
+const allItems = document.querySelectorAll('.checklist li');
+const totalItems = allItems.length;
+document.getElementById('progressTotal').textContent = totalItems;
+
+function saveState() {
+    const state = {};
+    document.querySelectorAll('.checklist[data-list]').forEach(list => {
+        state[list.dataset.list] = Array.from(list.querySelectorAll('li')).map(li => li.classList.contains('checked'));
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function loadState() {
+    try {
+        const state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        document.querySelectorAll('.checklist[data-list]').forEach(list => {
+            const arr = state[list.dataset.list];
+            if (arr) {
+                Array.from(list.querySelectorAll('li')).forEach((li, i) => {
+                    if (arr[i]) li.classList.add('checked');
+                });
+            }
+        });
+    } catch (_) {}
+}
+
+function updateProgress() {
+    const checked = document.querySelectorAll('.checklist li.checked').length;
+    document.getElementById('progressCount').textContent = checked;
+    // Mark phase pills as done if all checks in their section are checked
+    document.querySelectorAll('section[id^="pas-"]').forEach(section => {
+        const lists = section.querySelectorAll('.checklist');
+        if (lists.length > 0) {
+            const allChecked = Array.from(lists).every(list => {
+                const items = list.querySelectorAll('li');
+                return items.length > 0 && Array.from(items).every(li => li.classList.contains('checked'));
+            });
+            const phaseNum = section.id.replace('pas-', '');
+            const pill = document.querySelector(`.phase-pill[data-phase="${phaseNum}"]`);
+            if (pill) pill.classList.toggle('done', allChecked);
+            section.classList.toggle('done', allChecked);
+        }
+    });
+}
+
+allItems.forEach(li => {
+    li.addEventListener('click', e => {
+        if (e.target.closest('a')) return;
+        li.classList.toggle('checked');
+        saveState();
+        updateProgress();
+    });
+});
+
+loadState();
+updateProgress();
+</script>
+
+</body>
+</html>
