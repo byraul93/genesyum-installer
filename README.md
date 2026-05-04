@@ -8,7 +8,7 @@ Mentor AI dropshipping Shopify + Google Shopping pentru piețele UK, US, CA, AU,
 
 **[👉 Deschide ghidul interactiv pas cu pas](https://byraul93.github.io/genesyum-installer/welcome.html)**
 
-(sau dacă preferi raw: [welcome.html în repo](welcome.html))
+(sau direct raw: [welcome.html în repo](welcome.html))
 
 Ghidul te ține de mână de la zero — chiar dacă n-ai mai folosit Claude, GitHub, Telegram sau plugins. 8 pași cu screenshots, checklist progress, copy-paste comenzi, troubleshooting.
 
@@ -16,7 +16,7 @@ Ghidul te ține de mână de la zero — chiar dacă n-ai mai folosit Claude, Gi
 
 ## TL;DR — pentru cei grăbiți
 
-1. **Cont GitHub** + trimite username la `support@genesyum.com` → primești invitație repo
+1. **Cont GitHub** + trimite username pe **grupul tău Telegram privat** cu mentorii (Anca + Raul) → primești invitație repo
 2. **Accept invitație** GitHub
 3. Deschide **Claude Desktop → tab Code → New session**
 4. Paste:
@@ -32,7 +32,11 @@ Ghidul te ține de mână de la zero — chiar dacă n-ai mai folosit Claude, Gi
 
 ## Suport
 
-- Email: `support@genesyum.com`
-- Probleme cu access GitHub: trimite username-ul + descrierea problemei
+Tot suportul Genesyum se face prin **grupul tău Telegram privat** cu mentorii (Anca + Raul):
+- Probleme tehnice cu setup-ul (screenshot + descriere)
+- Probleme cu access GitHub (username + ce vezi)
+- Întrebări strategice (nișă, ads, magazin)
+
+Răspuns mentor în max 24h.
 
 © 2026 Raul Paclisan / Genesyum — uz exclusiv studenți activi.

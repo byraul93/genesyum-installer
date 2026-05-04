@@ -124,7 +124,7 @@ git ls-remote https://github.com/byraul93/genesyum-plugins HEAD
 
 - ✅ SHA → continue.
 - ❌ Still failing → student likely wasn't invited or accepted. Tell them:
-  > "Sunt logat cu contul tău GitHub, dar tot nu am access la repo-ul Genesyum. Verifică două lucruri: (1) Ai acceptat invitația de la support@genesyum.com? Vezi la https://github.com/byraul93/genesyum-plugins/invitations. (2) Contul cu care ești logat acum (`gh auth status` îți spune care) e același cu cel pe care l-ai trimis la support? Dacă da și nu vezi invitație în pagina de mai sus, scrie la support@genesyum.com cu username-ul GitHub afișat de `gh auth status`."
+  > "Sunt logat cu contul tău GitHub, dar tot nu am access la repo-ul Genesyum. Verifică două lucruri: (1) Ai acceptat invitația GitHub primită pe email? Vezi la https://github.com/byraul93/genesyum-plugins/invitations. (2) Contul cu care ești logat acum (`gh auth status` îți spune care) e același cu cel pe care l-ai trimis pe grupul Telegram privat cu mentorii? Dacă nu vezi invitație în pagina de mai sus, trimite pe grupul tău Telegram privat (cu Anca + Raul) username-ul afișat de `gh auth status`."
   
   Stop the setup.
 
