@@ -52,8 +52,9 @@ Run each via `Bash` or `PowerShell` tool. Capture stdout.
 
 - `git --version` (any version)
 - `node --version` (must be >= v18; parse the major version number)
-- `python --version` (must be a real Python 3.x — see special check below)
 - `claude --version` (you're running inside it; should return immediately)
+
+**Note:** Python is NOT required. Genesyum hooks rulează 100% în Node.js (din v1.0.2). NU instala Python — pierdere de timp.
 
 ### Git
 **If missing:** `winget install --id Git.Git -e --silent --accept-source-agreements --accept-package-agreements`
@@ -63,52 +64,69 @@ After install, refresh PATH (User+Machine env vars + `C:\Program Files\Git\cmd`)
 **If missing or below v18:** `winget install --id OpenJS.NodeJS.LTS -e --silent --accept-source-agreements --accept-package-agreements`
 Refresh PATH, re-test.
 
-### Python (CRITICAL — required for Genesyum hooks)
-
-**This is non-negotiable.** All Genesyum anti-hallucination hooks are Python scripts. Without real Python, hooks fail silently → identity injection broken, anti-hallucination dead, GenyAR responds as generic Claude.
-
-**On Windows, beware of the Microsoft Store stub.** Running `python --version` may return *"Python wasn't found"* even though `which python` shows a path inside `WindowsApps`. That path is a stub that only opens the Store; it's not real Python.
-
-**Detection logic (run yourself):**
-1. Run `python --version` and capture stdout + stderr + exit code.
-2. If exit ≠ 0, OR stdout/stderr contains `wasn't found`, `not found`, or anything other than `Python 3.x.y` → **Python is effectively missing**.
-3. Also try `python3 --version` (Mac/Linux convention).
-
-**If Python is missing or stub:**
-```
-winget install --id Python.Python.3.13 -e --silent --accept-source-agreements --accept-package-agreements
-```
-
-After winget completes:
-1. Refresh PATH (User+Machine env vars).
-2. Run `python --version` again. If it still returns the stub message:
-   - Tell the student: *"Am instalat Python dar PATH-ul nu s-a actualizat în sesiunea curentă. Te rog închide complet Claude (toate ferestrele) și redeschide-l, apoi re-rulează setup-ul. PATH-ul Windows se va încărca proaspăt cu Python real."*
-   - Stop the setup with exit code 2 ("restart needed").
-3. **Verify the hook stack works** before continuing — this is the smoke test that catches stub Python:
-   ```powershell
-   echo "{}" | python -c "import json, sys; print(json.dumps({'ok': True}))"
-   ```
-   Expected stdout: `{"ok": true}`. If anything else (Store opens, error message, empty), Python is still broken — block setup with the same restart message.
-
 ### Final prerequisite report
 
-After all four checks pass: "✅ Verificat: git, node, python, claude — toate prezente și funcționale."
+After all three checks pass: "✅ Verificat: git, node, claude — toate prezente și funcționale."
 
-If any check fails or required restart, stop and report exactly what's blocked.
+If any check fails, stop and report exactly what's blocked.
 
 ---
 
-## Step 1 — Verify GitHub access (execute yourself)
+## Step 1 — Verify GitHub access AND cache git credentials (execute yourself)
 
-The Genesyum plugins repo is private. Run:
+**Why this step is critical:** Step 3 (`claude plugin marketplace add`) does a `git clone` of the private repo behind the scenes. If git credentials aren't cached in Git Credential Manager (Windows) / keychain (Mac), the clone hangs silently waiting for a popup that Claude can't see → setup blocks at Step 3. Solution: prove auth + cache it NOW, in Step 1.
+
+### 1.1 — Try `git ls-remote` with no auth fallback
+
 ```
 git ls-remote https://github.com/byraul93/genesyum-plugins HEAD
 ```
 
-- ✅ If output is a SHA hash → access OK, continue silently.
-- ❌ If `Authentication failed` or `Repository not found`:
-  - Stop the setup.
-  - Tell the student: *"Nu am access la repo-ul Genesyum cu contul tău GitHub. Verifică două lucruri: (1) Ai acceptat invitația primită pe email de la support@genesyum.com? Verifică la https://github.com/byraul93/genesyum-plugins/invitations. (2) Ești logat cu contul GitHub corect? Cea mai simplă verificare: deschide GitHub Desktop sau VS Code, vezi că ești sign-in cu același cont care a primit invitația. Dacă tot nu merge, scrie la support@genesyum.com cu username-ul tău GitHub."*
+- ✅ If output is a SHA hash → student already has cached GitHub auth in git. Continue to Step 2.
+- ❌ If exits non-zero / hangs / shows `Authentication failed` / `Repository not found` / `terminal prompts disabled`:
+
+### 1.2 — Bootstrap credentials via GitHub CLI
+
+The cleanest way to make git work for the rest of setup is to install GitHub CLI and run `gh auth login`. CLI handles browser-based OAuth, then writes credentials to Git Credential Manager automatically (Windows) or keychain (Mac/Linux).
+
+Install if missing:
+- Windows: `winget install --id GitHub.cli -e --silent --accept-source-agreements --accept-package-agreements`
+- Mac: `brew install gh`
+- Linux: see https://cli.github.com/
+
+Refresh PATH after install.
+
+Then trigger interactive auth (this opens a browser tab for the student):
+```
+gh auth login --web --git-protocol https --hostname github.com
+```
+
+Tell the student:
+> "Vei vedea un cod în terminal și se va deschide browserul. Copiază codul, lipește-l în pagina GitHub, autorizează — apoi revino aici. Asta e singura dată când e nevoie de browser pentru setup."
+
+Wait until `gh auth status` returns "Logged in to github.com as ...".
+
+### 1.3 — Setup git credential helper to use gh
+
+After successful login, run:
+```
+gh auth setup-git
+```
+
+This wires GitHub CLI as the credential helper for git, so subsequent `git clone` commands authenticate automatically.
+
+### 1.4 — Re-test access
+
+Re-run:
+```
+git ls-remote https://github.com/byraul93/genesyum-plugins HEAD
+```
+
+- ✅ SHA → continue.
+- ❌ Still failing → student likely wasn't invited or accepted. Tell them:
+  > "Sunt logat cu contul tău GitHub, dar tot nu am access la repo-ul Genesyum. Verifică două lucruri: (1) Ai acceptat invitația de la support@genesyum.com? Vezi la https://github.com/byraul93/genesyum-plugins/invitations. (2) Contul cu care ești logat acum (`gh auth status` îți spune care) e același cu cel pe care l-ai trimis la support? Dacă da și nu vezi invitație în pagina de mai sus, scrie la support@genesyum.com cu username-ul GitHub afișat de `gh auth status`."
+  
+  Stop the setup.
 
 ---
 
@@ -225,7 +243,9 @@ Required keys to ensure are present:
       "Bash(shopify version*)", "Bash(shopify store auth*)", "Bash(shopify store execute*)",
       "Bash(shopify theme *)",
       "Bash(claude plugin*)",
+      "Bash(gh *)",
       "Bash(git status*)", "Bash(git log*)", "Bash(git diff*)",
+      "Bash(git ls-remote *)", "Bash(git config*)", "Bash(git credential*)",
       "Bash(ls*)", "Bash(pwd)", "Bash(cat *)", "Bash(echo *)",
       "Bash(mkdir -p *)",
       "Bash(start *)",
@@ -443,7 +463,8 @@ While doing this setup:
 - **The Telegram bot display name MUST be `GenyAR`** (Step 8a). If the student picks a different name, ask them to redo with `GenyAR`. The username (handle) is personal and free-form.
 - **Do not invent MCP tool names.** Specifically `browser_scroll` does NOT exist in the Playwright MCP tool list. Stick to the names in the settings.json template.
 - **PowerShell stderr is not always an error.** When running `npm install`, `claude plugin install`, `git`, etc. via PowerShell, native command stderr (e.g., "npm notice") gets wrapped as ErrorRecords if `$ErrorActionPreference='Stop'`. Use `$LASTEXITCODE` to determine real success/failure, not the presence of stderr text.
-- **Python stub on Windows is fatal silently.** Microsoft Store ships a `python.exe` stub on Windows 10/11 that opens the Store instead of running Python. Plugin hooks fail at this silently → identity injection broken, anti-hallucination dead. ALWAYS verify Python via the smoke test: `echo "{}" | python -c "print('ok')"`. If output is anything other than `ok`, install real Python via winget BEFORE proceeding.
+- **Do NOT install Python.** Genesyum hooks rulează 100% Node.js începând cu plugin v1.0.2. Python NU mai e folosit la runtime. Dacă vezi în vechi tutorial / vechi versiune SETUP.md că trebuie Python, ignoră — e obsolete. Singurele runtime-uri necesare: Node 18+ (hooks), Bun (Telegram bot bridge). Python install = waste de 5+ minute pentru student.
+- **Git auth MUST be cached BEFORE Step 3.** `claude plugin marketplace add` face git clone în background. Dacă auth nu e cache-uit, git triggers Git Credential Manager popup invisible to Claude → setup hang silent. Step 1 obligatoriu via `gh auth login` + `gh auth setup-git` înainte de orice marketplace add.
 
 ---
 
@@ -451,16 +472,17 @@ While doing this setup:
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `Failed to clone marketplace repository: Authentication failed` | git not logged in with the GitHub account that has access | Run `gh auth login` or sign in via GitHub Desktop / VS Code; restart Claude |
-| `Repository not found` (yet student knows it exists) | Student wasn't invited or didn't accept invitation | Send student to https://github.com/byraul93/genesyum-plugins/invitations to accept; if no invitation, contact support |
-| `git not found or in unsafe location` | Git for Windows not installed | Install Git from https://git-scm.com/download/win |
-| Plugin install: "marketplace not found" | Marketplace add failed silently | Re-run Step 3 |
+| Setup hangs at Step 3 (marketplace add) with no error | Git Credential Manager popup invisible to Claude → blocks waiting for student | Re-run Step 1 (`gh auth login`) to ensure credentials are properly cached before retrying Step 3 |
+| `Failed to clone marketplace repository: Authentication failed` | git credential cache missing or expired | Run `gh auth login` then `gh auth setup-git`; retry Step 3 |
+| `Repository not found` (yet student knows it exists) | Student wasn't invited / didn't accept invitation, OR logged in with wrong GitHub account | (1) Check https://github.com/byraul93/genesyum-plugins/invitations. (2) Verify `gh auth status` shows the account that received the invite. (3) If mismatch, log out + log in with correct account. (4) If no invite, contact support |
+| `git not found or in unsafe location` | Git for Windows not installed | Install Git: `winget install --id Git.Git -e --silent --accept-source-agreements --accept-package-agreements` |
+| Plugin install: "marketplace not found" | Marketplace add failed silently | Re-run Step 3 after verifying Step 1 auth is working |
 | Settings.json is invalid after edit | BOM or syntax error | Re-read backup `*.bak.*` and merge again carefully |
-| Bot Telegram răspunde ca "Claude" generic, nu ca GenyAR | Hook Python eșuează silent — Python lipsește sau e stub Microsoft Store | Run `winget install --id Python.Python.3.13 -e --silent --accept-source-agreements --accept-package-agreements`, apoi restart Claude complet. Verifică cu: `echo "{}" \| python -c "print('ok')"` — trebuie să printeze `ok`, NU să deschidă Microsoft Store |
-| `python --version` deschide Microsoft Store | App execution alias points to Store stub instead of real Python | Win11: Settings → Apps → Advanced app settings → App execution aliases → disable `python.exe` și `python3.exe`. Apoi instalează Python via winget |
+| Bot Telegram răspunde ca "Claude" generic, nu ca GenyAR | Plugin version pre-1.0.2 (vechi cu Python) pe machine | Update: `claude plugin update genesyum-core` (latest = 1.1.1 cu Node.js hooks). Restart bot Telegram |
+| Permission denied for `Bash(git ...)` or `Bash(gh ...)` | settings.json allowlist out-of-date | Either click "Allow for this conversation" at the popup, OR re-run Step 6 to apply latest allowlist |
 
 ---
 
 **Maintainer:** Raul Paclisan / Genesyum
-**Last updated:** 2026-05-03
-**Version:** 1.1.0 (auth via GitHub Collaborator, no PAT)
+**Last updated:** 2026-05-04
+**Version:** 1.2.0 (Python prereq removed — hooks 100% Node.js; gh auth login pre-flight pentru git credential cache; allowlist extended cu git ls-remote/config/credential + gh)
